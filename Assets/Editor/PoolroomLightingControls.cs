@@ -37,6 +37,15 @@ internal sealed class PoolroomLightingControls : EditorWindow
     private const string FloorTubePrefabPath = "Assets/Poolroom/Cracks/Lighting/Floor Crack Tube Light.prefab";
     private const string WallBeamPrefabPath = "Assets/Poolroom/Cracks/Lighting/Wall Crack Light Beam.prefab";
     private const string FloorBeamPrefabPath = "Assets/Poolroom/Cracks/Lighting/Floor Crack Light Beam.prefab";
+    private const string SelectedPageKey = "LiminalPoolroom.LightingControls.SelectedPage";
+
+    private static readonly string[] PageNames =
+    {
+        "Room",
+        "Camera",
+        "Wall Cracks",
+        "Floor Cracks"
+    };
 
     private sealed class CrackValues
     {
@@ -55,6 +64,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
     }
 
     private Vector2 scroll;
+    private int selectedPage;
     private float overallBloom;
     private float chromaticAberration;
     private float visualNoise;
@@ -62,6 +72,16 @@ internal sealed class PoolroomLightingControls : EditorWindow
     private FilmGrainLookup noiseScale;
     private float fisheyeStrength;
     private float cameraFieldOfView = 60f;
+    private Color cameraColorFilter = Color.white;
+    private float cameraSaturation;
+    private float cameraContrast;
+    private float cameraHueShift;
+    private float cameraExposure;
+    private float cameraTemperature;
+    private float cameraTint;
+    private float cameraVignette;
+    private bool showColorFilters = true;
+    private int selectedFilterPreset;
     private CrackValues wallValues;
     private CrackValues floorValues;
 
@@ -93,17 +113,27 @@ internal sealed class PoolroomLightingControls : EditorWindow
         FilmGrainLookup.Large02
     };
 
+    private static readonly string[] FilterPresetNames =
+    {
+        "Neutral",
+        "Creepy Red",
+        "Cold Liminal",
+        "Sickly Green",
+        "Faded VHS"
+    };
+
     [MenuItem("Liminal Poolroom/Lighting Controls", false, 1)]
     internal static void OpenWindow()
     {
         PoolroomLightingControls window = GetWindow<PoolroomLightingControls>();
         window.titleContent = new GUIContent("Poolroom Lighting");
-        window.minSize = new Vector2(420f, 650f);
+        window.minSize = new Vector2(500f, 650f);
         window.Show();
     }
 
     private void OnEnable()
     {
+        selectedPage = Mathf.Clamp(EditorPrefs.GetInt(SelectedPageKey, 0), 0, PageNames.Length - 1);
         wallValues = new CrackValues
         {
             title = "Wall Cracks",
@@ -127,11 +157,10 @@ internal sealed class PoolroomLightingControls : EditorWindow
 
     private void OnGUI()
     {
-        scroll = EditorGUILayout.BeginScrollView(scroll);
         EditorGUILayout.Space(8f);
         EditorGUILayout.LabelField("Liminal Poolroom Lighting", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
-            "These sliders preview immediately. Wall cracks and floor cracks use separate materials and lights, so one group will not alter the other.",
+            "Choose a page below. Every slider previews immediately, and each crack group remains separate from the others.",
             MessageType.Info);
 
         bool sceneIsOpen = SceneManager.GetActiveScene().path == ScenePath;
@@ -142,11 +171,34 @@ internal sealed class PoolroomLightingControls : EditorWindow
                 OpenPoolroomScene();
         }
 
-        DrawRoomSection(sceneIsOpen);
+        int newPage = GUILayout.Toolbar(selectedPage, PageNames, GUILayout.Height(26f));
+        if (newPage != selectedPage)
+        {
+            selectedPage = newPage;
+            scroll = Vector2.zero;
+            EditorPrefs.SetInt(SelectedPageKey, selectedPage);
+            GUI.FocusControl(null);
+        }
+
+        scroll = EditorGUILayout.BeginScrollView(scroll);
         EditorGUILayout.Space(8f);
-        DrawCrackSection(wallValues, new Color(1f, 0.72f, 0.72f));
-        EditorGUILayout.Space(8f);
-        DrawCrackSection(floorValues, new Color(1f, 0.86f, 0.72f));
+
+        switch (selectedPage)
+        {
+            case 0:
+                DrawRoomSection(sceneIsOpen);
+                break;
+            case 1:
+                DrawCameraSection(sceneIsOpen);
+                break;
+            case 2:
+                DrawCrackSection(wallValues, new Color(1f, 0.72f, 0.72f));
+                break;
+            case 3:
+                DrawCrackSection(floorValues, new Color(1f, 0.86f, 0.72f));
+                break;
+        }
+
         EditorGUILayout.Space(12f);
 
         using (new EditorGUILayout.HorizontalScope())
@@ -192,11 +244,16 @@ internal sealed class PoolroomLightingControls : EditorWindow
                 overallBloom = newBloom;
                 ApplyBloom();
             }
+        }
+    }
 
-            EditorGUILayout.Space(8f);
+    private void DrawCameraSection(bool sceneIsOpen)
+    {
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
             EditorGUILayout.LabelField("Player Camera Effects", EditorStyles.boldLabel);
             EditorGUILayout.LabelField(
-                "Adds subtle lens color separation and moving film-like noise to the player's view.",
+                "Adjusts the player's lens, viewing width, moving noise, and final color mood.",
                 EditorStyles.wordWrappedMiniLabel);
 
             EditorGUI.BeginChangeCheck();
@@ -225,6 +282,51 @@ internal sealed class PoolroomLightingControls : EditorWindow
                     cameraFieldOfView, 40f, 120f);
             }
 
+            Color newColorFilter = cameraColorFilter;
+            float newSaturation = cameraSaturation;
+            float newContrast = cameraContrast;
+            float newHueShift = cameraHueShift;
+            float newExposure = cameraExposure;
+            float newTemperature = cameraTemperature;
+            float newTint = cameraTint;
+            float newVignette = cameraVignette;
+
+            EditorGUILayout.Space(5f);
+            showColorFilters = EditorGUILayout.Foldout(showColorFilters, "Color Filter & Mood", true);
+            if (showColorFilters)
+            {
+                EditorGUILayout.LabelField(
+                    "Tint and reshape every color seen through the player camera. White and zero values are neutral.",
+                    EditorStyles.wordWrappedMiniLabel);
+                newColorFilter = EditorGUILayout.ColorField(
+                    new GUIContent("Filter Color", "Multiplies the finished camera image by this color. White leaves colors unchanged."),
+                    cameraColorFilter,
+                    true,
+                    false,
+                    false);
+                newSaturation = EditorGUILayout.Slider(
+                    new GUIContent("Saturation", "Negative values remove color; positive values make colors stronger."),
+                    cameraSaturation, -100f, 100f);
+                newContrast = EditorGUILayout.Slider(
+                    new GUIContent("Contrast", "Changes the difference between dark and bright areas."),
+                    cameraContrast, -100f, 100f);
+                newHueShift = EditorGUILayout.Slider(
+                    new GUIContent("Hue Shift", "Rotates every color around the color wheel."),
+                    cameraHueShift, -180f, 180f);
+                newExposure = EditorGUILayout.Slider(
+                    new GUIContent("Camera Exposure", "Brightens or darkens the final camera image without changing the actual lights."),
+                    cameraExposure, -3f, 3f);
+                newTemperature = EditorGUILayout.Slider(
+                    new GUIContent("Temperature", "Negative values feel colder and blue; positive values feel warmer and orange."),
+                    cameraTemperature, -100f, 100f);
+                newTint = EditorGUILayout.Slider(
+                    new GUIContent("Green / Magenta Tint", "Negative values add green; positive values add magenta."),
+                    cameraTint, -100f, 100f);
+                newVignette = EditorGUILayout.Slider(
+                    new GUIContent("Darkened Edges", "Adds a soft dark frame around the edges of the player's view."),
+                    cameraVignette, 0f, 1f);
+            }
+
             if (EditorGUI.EndChangeCheck())
             {
                 chromaticAberration = newChromaticAberration;
@@ -234,9 +336,36 @@ internal sealed class PoolroomLightingControls : EditorWindow
                 fisheyeStrength = newFisheyeStrength;
                 bool fieldOfViewChanged = !Mathf.Approximately(cameraFieldOfView, newFieldOfView);
                 cameraFieldOfView = newFieldOfView;
+                cameraColorFilter = newColorFilter;
+                cameraSaturation = newSaturation;
+                cameraContrast = newContrast;
+                cameraHueShift = newHueShift;
+                cameraExposure = newExposure;
+                cameraTemperature = newTemperature;
+                cameraTint = newTint;
+                cameraVignette = newVignette;
                 ApplyPlayerCameraEffects();
                 if (fieldOfViewChanged)
                     ApplyPlayerCameraFieldOfView();
+            }
+
+            if (showColorFilters)
+            {
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    selectedFilterPreset = EditorGUILayout.Popup(
+                        new GUIContent("Mood Preset", "Choose a ready-made color style, then click Apply."),
+                        selectedFilterPreset,
+                        FilterPresetNames);
+                    if (GUILayout.Button("Apply", GUILayout.Width(70f)))
+                        ApplyFilterPreset(selectedFilterPreset);
+                }
+
+                if (GUILayout.Button("Reset Only Color Filter to Neutral"))
+                {
+                    SetNeutralColorFilter();
+                    ApplyPlayerCameraEffects();
+                }
             }
 
             if (GUILayout.Button("Restore Subtle Camera Effects"))
@@ -247,6 +376,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
                 noiseResponse = 0.8f;
                 fisheyeStrength = 0.08f;
                 cameraFieldOfView = 70f;
+                SetNeutralColorFilter();
                 ApplyPlayerCameraEffects();
                 if (sceneIsOpen)
                     ApplyPlayerCameraFieldOfView();
@@ -387,13 +517,24 @@ internal sealed class PoolroomLightingControls : EditorWindow
         if (profile != null &&
             profile.TryGet(out ChromaticAberration chromatic) &&
             profile.TryGet(out FilmGrain grain) &&
-            profile.TryGet(out LensDistortion lensDistortion))
+            profile.TryGet(out LensDistortion lensDistortion) &&
+            profile.TryGet(out ColorAdjustments colorAdjustments) &&
+            profile.TryGet(out WhiteBalance whiteBalance) &&
+            profile.TryGet(out Vignette vignette))
         {
             chromaticAberration = chromatic.intensity.value;
             visualNoise = grain.intensity.value;
             noiseScale = grain.type.value;
             noiseResponse = grain.response.value;
             fisheyeStrength = Mathf.Clamp01(-lensDistortion.intensity.value);
+            cameraColorFilter = colorAdjustments.colorFilter.value;
+            cameraSaturation = colorAdjustments.saturation.value;
+            cameraContrast = colorAdjustments.contrast.value;
+            cameraHueShift = colorAdjustments.hueShift.value;
+            cameraExposure = colorAdjustments.postExposure.value;
+            cameraTemperature = whiteBalance.temperature.value;
+            cameraTint = whiteBalance.tint.value;
+            cameraVignette = vignette.intensity.value;
             Camera playerCamera = FindPlayerCamera();
             if (playerCamera != null)
                 cameraFieldOfView = playerCamera.fieldOfView;
@@ -405,6 +546,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
         noiseScale = FilmGrainLookup.Medium3;
         noiseResponse = 0.8f;
         fisheyeStrength = 0f;
+        SetNeutralColorFilter();
         Camera fallbackCamera = FindPlayerCamera();
         cameraFieldOfView = fallbackCamera != null ? fallbackCamera.fieldOfView : 60f;
     }
@@ -415,24 +557,101 @@ internal sealed class PoolroomLightingControls : EditorWindow
         if (profile == null ||
             !profile.TryGet(out ChromaticAberration chromatic) ||
             !profile.TryGet(out FilmGrain grain) ||
-            !profile.TryGet(out LensDistortion lensDistortion))
+            !profile.TryGet(out LensDistortion lensDistortion) ||
+            !profile.TryGet(out ColorAdjustments colorAdjustments) ||
+            !profile.TryGet(out WhiteBalance whiteBalance) ||
+            !profile.TryGet(out Vignette vignette))
         {
             Debug.LogError("Poolroom Lighting Controls could not find the player camera effects in the global poolroom profile.");
             return;
         }
 
-        Undo.RecordObjects(new UnityEngine.Object[] { chromatic, grain, lensDistortion }, "Adjust Player Camera Effects");
+        Undo.RecordObjects(
+            new UnityEngine.Object[] { chromatic, grain, lensDistortion, colorAdjustments, whiteBalance, vignette },
+            "Adjust Player Camera Effects");
         chromatic.intensity.value = chromaticAberration;
         grain.intensity.value = visualNoise;
         grain.type.value = noiseScale;
         grain.response.value = noiseResponse;
         lensDistortion.intensity.value = -fisheyeStrength;
+        colorAdjustments.colorFilter.value = cameraColorFilter;
+        colorAdjustments.saturation.value = cameraSaturation;
+        colorAdjustments.contrast.value = cameraContrast;
+        colorAdjustments.hueShift.value = cameraHueShift;
+        colorAdjustments.postExposure.value = cameraExposure;
+        whiteBalance.temperature.value = cameraTemperature;
+        whiteBalance.tint.value = cameraTint;
+        vignette.intensity.value = cameraVignette;
         EditorUtility.SetDirty(chromatic);
         EditorUtility.SetDirty(grain);
         EditorUtility.SetDirty(lensDistortion);
+        EditorUtility.SetDirty(colorAdjustments);
+        EditorUtility.SetDirty(whiteBalance);
+        EditorUtility.SetDirty(vignette);
         EditorUtility.SetDirty(profile);
         AssetDatabase.SaveAssets();
         SceneView.RepaintAll();
+    }
+
+    private void ApplyFilterPreset(int preset)
+    {
+        SetNeutralColorFilter();
+
+        switch (preset)
+        {
+            case 1:
+                cameraColorFilter = new Color(1f, 0.72f, 0.72f, 1f);
+                cameraSaturation = -10f;
+                cameraContrast = 18f;
+                cameraExposure = -0.1f;
+                cameraTemperature = 18f;
+                cameraTint = 12f;
+                cameraVignette = 0.25f;
+                break;
+            case 2:
+                cameraColorFilter = new Color(0.72f, 0.86f, 1f, 1f);
+                cameraSaturation = -12f;
+                cameraContrast = 8f;
+                cameraExposure = -0.05f;
+                cameraTemperature = -25f;
+                cameraTint = -5f;
+                cameraVignette = 0.12f;
+                break;
+            case 3:
+                cameraColorFilter = new Color(0.8f, 1f, 0.72f, 1f);
+                cameraSaturation = -18f;
+                cameraContrast = 12f;
+                cameraExposure = -0.1f;
+                cameraTemperature = -8f;
+                cameraTint = -18f;
+                cameraVignette = 0.18f;
+                break;
+            case 4:
+                cameraColorFilter = new Color(0.95f, 0.88f, 1f, 1f);
+                cameraSaturation = -35f;
+                cameraContrast = -10f;
+                cameraHueShift = 6f;
+                cameraExposure = 0.05f;
+                cameraTemperature = 8f;
+                cameraTint = 12f;
+                cameraVignette = 0.2f;
+                break;
+        }
+
+        ApplyPlayerCameraEffects();
+        Repaint();
+    }
+
+    private void SetNeutralColorFilter()
+    {
+        cameraColorFilter = Color.white;
+        cameraSaturation = 0f;
+        cameraContrast = 0f;
+        cameraHueShift = 0f;
+        cameraExposure = 0f;
+        cameraTemperature = 0f;
+        cameraTint = 0f;
+        cameraVignette = 0f;
     }
 
     private void ApplyPlayerCameraFieldOfView()
