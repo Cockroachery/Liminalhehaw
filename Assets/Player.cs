@@ -33,6 +33,7 @@ public class Player : MonoBehaviour
     [Header("Mouse Look")]
     [SerializeField] private Transform viewTransform;
     [SerializeField] private float mouseSensitivity = 0.1f;
+    [SerializeField, Min(0f)] private float lookSmoothing = 0.025f;
     [SerializeField] private float minimumLookAngle = -80f;
     [SerializeField] private float maximumLookAngle = 80f;
 
@@ -44,6 +45,10 @@ public class Player : MonoBehaviour
     private float swimVerticalInput;
     private float groundedUntil;
     private float pitch;
+    private float yaw;
+    private float displayedPitch;
+    private float displayedYaw;
+    private float displayedCrouchAmount;
     private float ignoreLadderUntil;
     private float standingColliderHeight;
     private Vector3 standingColliderCenter;
@@ -79,6 +84,10 @@ public class Player : MonoBehaviour
             {
                 pitch -= 360f;
             }
+
+            yaw = transform.eulerAngles.y;
+            displayedPitch = pitch;
+            displayedYaw = yaw;
         }
     }
 
@@ -100,7 +109,7 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
-        UpdateMouseLook();
+        ReadMouseLookInput();
 
         Keyboard keyboard = Keyboard.current;
         if (keyboard == null)
@@ -127,7 +136,7 @@ public class Player : MonoBehaviour
         }
     }
 
-    private void UpdateMouseLook()
+    private void ReadMouseLookInput()
     {
         Mouse mouse = Mouse.current;
         if (mouse == null || viewTransform == null)
@@ -137,9 +146,43 @@ public class Player : MonoBehaviour
 
         Vector2 mouseDelta = mouse.delta.ReadValue() * mouseSensitivity;
         pitch = Mathf.Clamp(pitch - mouseDelta.y, minimumLookAngle, maximumLookAngle);
+        yaw = Mathf.Repeat(yaw + mouseDelta.x, 360f);
+    }
 
-        transform.Rotate(Vector3.up, mouseDelta.x, Space.Self);
-        viewTransform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+    private void LateUpdate()
+    {
+        if (viewTransform == null)
+        {
+            return;
+        }
+
+        float lookBlend = lookSmoothing <= 0f
+            ? 1f
+            : 1f - Mathf.Exp(-Time.unscaledDeltaTime / lookSmoothing);
+
+        displayedPitch = Mathf.LerpAngle(displayedPitch, pitch, lookBlend);
+        displayedYaw = Mathf.LerpAngle(displayedYaw, yaw, lookBlend);
+
+        // LateUpdate is the final graphical update for this frame. Applying the
+        // view here keeps camera motion in step with rendering instead of physics.
+        transform.rotation = Quaternion.Euler(0f, displayedYaw, 0f);
+        viewTransform.localRotation = Quaternion.Euler(displayedPitch, 0f, 0f);
+
+        if (bodyCollider != null && standingColliderHeight > crouchHeight)
+        {
+            float targetCrouchAmount = Mathf.InverseLerp(
+                standingColliderHeight,
+                crouchHeight,
+                bodyCollider.height);
+            float normalizedCrouchSpeed = crouchTransitionSpeed
+                / (standingColliderHeight - crouchHeight);
+            displayedCrouchAmount = Mathf.MoveTowards(
+                displayedCrouchAmount,
+                targetCrouchAmount,
+                normalizedCrouchSpeed * Time.deltaTime);
+            viewTransform.localPosition = standingViewLocalPosition
+                + Vector3.down * (crouchViewDrop * displayedCrouchAmount);
+        }
     }
 
     private static void SetCursorLocked(bool isLocked)
@@ -257,12 +300,6 @@ public class Player : MonoBehaviour
         bodyCollider.height = nextHeight;
         bodyCollider.center = standingColliderCenter
             + Vector3.down * ((standingColliderHeight - nextHeight) * 0.5f);
-
-        if (viewTransform != null)
-        {
-            float crouchAmount = Mathf.InverseLerp(standingColliderHeight, crouchHeight, nextHeight);
-            viewTransform.localPosition = standingViewLocalPosition + Vector3.down * (crouchViewDrop * crouchAmount);
-        }
     }
 
     private bool CanStandUp()
@@ -309,6 +346,7 @@ public class Player : MonoBehaviour
 
         if (viewTransform != null)
         {
+            displayedCrouchAmount = 0f;
             viewTransform.localPosition = standingViewLocalPosition;
         }
     }

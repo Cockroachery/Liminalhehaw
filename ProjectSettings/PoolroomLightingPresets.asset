@@ -17,7 +17,7 @@ MonoBehaviour:
   lastSavedValues:
     presetName: Last Saved Values
     roomBrightness: 1
-    poolBrightness: 1
+    poolBrightness: 0.02
     overallBloom: 0.5
     chromaticAberration: 1
     visualNoise: 1
@@ -52,7 +52,7 @@ MonoBehaviour:
   namedPresets:
   - presetName: CrazyPoolRoom
     roomBrightness: 1
-    poolBrightness: 1
+    poolBrightness: 0.02
     overallBloom: 0.5
     chromaticAberration: 1
     visualNoise: 1

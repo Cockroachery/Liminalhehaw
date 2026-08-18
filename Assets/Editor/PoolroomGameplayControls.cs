@@ -146,6 +146,7 @@ internal sealed class PoolroomGameplayControls : EditorWindow
 
         BeginSection("Mouse Look", "How quickly and how far the player can look around.");
         DrawFloatSlider(serializedPlayer, "mouseSensitivity", "Mouse Sensitivity", "How strongly mouse movement turns the camera.", 0.01f, 2f);
+        DrawFloatSlider(serializedPlayer, "lookSmoothing", "Camera Smoothing", "A tiny delay that softens camera jitter. Set this to 0 for completely immediate movement.", 0f, 0.15f);
         DrawFloatSlider(serializedPlayer, "minimumLookAngle", "Look Down Limit", "The lowest vertical viewing angle.", -89f, 0f);
         DrawFloatSlider(serializedPlayer, "maximumLookAngle", "Look Up Limit", "The highest vertical viewing angle.", 0f, 89f);
         EndSection();
@@ -165,6 +166,7 @@ internal sealed class PoolroomGameplayControls : EditorWindow
             SetFloat(serializedPlayer, "crouchViewDrop", 0.6f);
             SetFloat(serializedPlayer, "crouchMoveSpeedMultiplier", 0.55f);
             SetFloat(serializedPlayer, "mouseSensitivity", 0.8f);
+            SetFloat(serializedPlayer, "lookSmoothing", 0.025f);
             SetFloat(serializedPlayer, "minimumLookAngle", -80f);
             SetFloat(serializedPlayer, "maximumLookAngle", 80f);
             ApplySceneProperties(serializedPlayer, player);
