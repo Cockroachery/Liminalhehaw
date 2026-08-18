@@ -13,6 +13,14 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
     [SerializeField] private Toggle drunkModeToggle;
     [SerializeField] private Volume blurVolume;
 
+    [Header("Menu Music")]
+    [SerializeField] private AudioSource menuMusicSource;
+    [SerializeField] private AudioClip pipeCity;
+    [SerializeField] private AudioClip threeByThree;
+    [SerializeField, Range(0f, 1f)] private float menuMusicVolume = 0.55f;
+    [SerializeField, Min(0f)] private float minimumSongGap = 3f;
+    [SerializeField, Min(0f)] private float maximumSongGap = 5f;
+
     [Header("Transition")]
     [SerializeField, Min(0f)] private float fadeDuration = 0.85f;
 
@@ -34,6 +42,7 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
     {
         // Reassert the menu state after every object's Awake/OnEnable has run.
         ShowTitleScreen();
+        StartCoroutine(PlayMenuMusic());
     }
 
     private void OnDestroy()
@@ -49,13 +58,19 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
         CanvasGroup canvas,
         Button button,
         Toggle drunkToggle,
-        Volume titleBlur)
+        Volume titleBlur,
+        AudioSource musicSource,
+        AudioClip firstSong,
+        AudioClip secondSong)
     {
         player = targetPlayer;
         titleCanvas = canvas;
         playButton = button;
         drunkModeToggle = drunkToggle;
         blurVolume = titleBlur;
+        menuMusicSource = musicSource;
+        pipeCity = firstSong;
+        threeByThree = secondSong;
     }
 
     public void Play()
@@ -102,6 +117,7 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
         float elapsed = 0f;
         float duration = Mathf.Max(fadeDuration, 0.01f);
         bool keepBlur = drunkModeToggle != null && drunkModeToggle.isOn;
+        float startingMusicVolume = menuMusicSource != null ? menuMusicSource.volume : 0f;
 
         if (titleCanvas != null)
         {
@@ -124,6 +140,11 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
                 blurVolume.weight = 1f - amount;
             }
 
+            if (menuMusicSource != null)
+            {
+                menuMusicSource.volume = startingMusicVolume * (1f - amount);
+            }
+
             yield return null;
         }
 
@@ -133,10 +154,60 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
             blurVolume.gameObject.SetActive(keepBlur);
         }
 
+        if (menuMusicSource != null)
+        {
+            menuMusicSource.Stop();
+            menuMusicSource.volume = menuMusicVolume;
+        }
+
         player?.SetGameplayInputEnabled(true);
         if (!keepBlur)
         {
             gameObject.SetActive(false);
+        }
+    }
+
+    private IEnumerator PlayMenuMusic()
+    {
+        if (menuMusicSource == null)
+        {
+            yield break;
+        }
+
+        AudioClip[] songs = { pipeCity, threeByThree };
+        int songIndex = 0;
+
+        while (!playStarted)
+        {
+            AudioClip song = songs[songIndex];
+            songIndex = (songIndex + 1) % songs.Length;
+
+            if (song != null)
+            {
+                menuMusicSource.clip = song;
+                menuMusicSource.volume = menuMusicVolume;
+                menuMusicSource.Play();
+
+                while (menuMusicSource.isPlaying && !playStarted)
+                {
+                    yield return null;
+                }
+            }
+
+            if (playStarted)
+            {
+                yield break;
+            }
+
+            float gap = Random.Range(
+                Mathf.Min(minimumSongGap, maximumSongGap),
+                Mathf.Max(minimumSongGap, maximumSongGap));
+            float waited = 0f;
+            while (waited < gap && !playStarted)
+            {
+                waited += Time.unscaledDeltaTime;
+                yield return null;
+            }
         }
     }
 
@@ -165,6 +236,11 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
         if (blurVolume == null)
         {
             blurVolume = GetComponentInChildren<Volume>(true);
+        }
+
+        if (menuMusicSource == null)
+        {
+            menuMusicSource = GetComponent<AudioSource>();
         }
     }
 }
