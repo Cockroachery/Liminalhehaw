@@ -12,6 +12,7 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
     [SerializeField] private Button playButton;
     [SerializeField] private Toggle drunkModeToggle;
     [SerializeField] private Volume blurVolume;
+    [SerializeField] private PoolroomGameplayMusic gameplayMusic;
 
     [Header("Menu Music")]
     [SerializeField] private AudioSource menuMusicSource;
@@ -89,6 +90,11 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
         StartCoroutine(FadeIntoGame());
     }
 
+    public void ConfigureGameplayMusic(PoolroomGameplayMusic music)
+    {
+        gameplayMusic = music;
+    }
+
     private void ShowTitleScreen()
     {
         if (!Application.isPlaying || playStarted)
@@ -160,6 +166,7 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
             menuMusicSource.volume = menuMusicVolume;
         }
 
+        gameplayMusic?.BeginPlaying();
         player?.SetGameplayInputEnabled(true);
         if (!keepBlur)
         {
@@ -241,6 +248,11 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
         if (menuMusicSource == null)
         {
             menuMusicSource = GetComponent<AudioSource>();
+        }
+
+        if (gameplayMusic == null)
+        {
+            gameplayMusic = FindAnyObjectByType<PoolroomGameplayMusic>();
         }
     }
 }
