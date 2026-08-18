@@ -5,7 +5,7 @@ General To Do:
 - Add music
 - General sound effects like a water splash noise (+ feet for walking)
 - Add the 3d models in, like the vases and creatures
-- Add camera rocking effect
+- Add camera rocking effect, and pixelation effect
 
 Prompts:
 
