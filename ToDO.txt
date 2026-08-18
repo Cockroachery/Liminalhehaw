@@ -3,7 +3,7 @@ General To Do:
 
 - Make title screen; restrict movement of player, until a "play" button is clicked. The play button will be acompanied by your starting spot but with heavy screen blur.
 - Add music
-- General sound effects like a water splash noise
+- General sound effects like a water splash noise (+ feet for walking)
 - Add the 3d models in, like the vases and creatures
 
 Prompts:
