@@ -4320,6 +4320,12 @@ MonoBehaviour:
   swimAcceleration: 11
   floatDepth: 0.45
   floatStrength: 4
+  passiveRiseSpeed: 0.65
+  passiveRiseAcceleration: 1.25
+  crouchHeight: 1.25
+  crouchTransitionSpeed: 6
+  crouchViewDrop: 0.6
+  crouchMoveSpeedMultiplier: 0.55
   ladderClimbSpeed: 3.5
   viewTransform: {fileID: 0}
   mouseSensitivity: 0.8

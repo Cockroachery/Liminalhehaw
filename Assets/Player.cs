@@ -18,6 +18,14 @@ public class Player : MonoBehaviour
     [SerializeField] private float swimAcceleration = 11f;
     [SerializeField] private float floatDepth = 0.45f;
     [SerializeField] private float floatStrength = 4f;
+    [SerializeField] private float passiveRiseSpeed = 0.65f;
+    [SerializeField] private float passiveRiseAcceleration = 1.25f;
+
+    [Header("Crouching")]
+    [SerializeField] private float crouchHeight = 1.25f;
+    [SerializeField] private float crouchTransitionSpeed = 6f;
+    [SerializeField] private float crouchViewDrop = 0.6f;
+    [SerializeField, Range(0.1f, 1f)] private float crouchMoveSpeedMultiplier = 0.55f;
 
     [Header("Climbing")]
     [SerializeField] private float ladderClimbSpeed = 3.5f;
@@ -29,19 +37,33 @@ public class Player : MonoBehaviour
     [SerializeField] private float maximumLookAngle = 80f;
 
     private Rigidbody body;
+    private CapsuleCollider bodyCollider;
     private Vector2 moveInput;
     private bool jumpQueued;
+    private bool crouchHeld;
     private float swimVerticalInput;
     private float groundedUntil;
     private float pitch;
     private float ignoreLadderUntil;
+    private float standingColliderHeight;
+    private Vector3 standingColliderCenter;
+    private Vector3 standingViewLocalPosition;
     private SwimmableWater currentWater;
     private ClimbableLadder currentLadder;
+    private readonly Collider[] overheadColliders = new Collider[16];
 
     private void Awake()
     {
         body = GetComponent<Rigidbody>();
+        bodyCollider = GetComponent<CapsuleCollider>();
         body.freezeRotation = true;
+
+        if (bodyCollider != null)
+        {
+            standingColliderHeight = bodyCollider.height;
+            standingColliderCenter = bodyCollider.center;
+            crouchHeight = Mathf.Clamp(crouchHeight, bodyCollider.radius * 2f, standingColliderHeight);
+        }
 
         if (viewTransform == null)
         {
@@ -51,6 +73,7 @@ public class Player : MonoBehaviour
 
         if (viewTransform != null)
         {
+            standingViewLocalPosition = viewTransform.localPosition;
             pitch = viewTransform.localEulerAngles.x;
             if (pitch > 180f)
             {
@@ -70,6 +93,8 @@ public class Player : MonoBehaviour
         {
             body.useGravity = true;
         }
+
+        RestoreStandingPosture();
         SetCursorLocked(false);
     }
 
@@ -81,6 +106,8 @@ public class Player : MonoBehaviour
         if (keyboard == null)
         {
             moveInput = Vector2.zero;
+            swimVerticalInput = 0f;
+            crouchHeld = false;
             return;
         }
 
@@ -88,8 +115,9 @@ public class Player : MonoBehaviour
             (keyboard.dKey.isPressed ? 1f : 0f) - (keyboard.aKey.isPressed ? 1f : 0f),
             (keyboard.wKey.isPressed ? 1f : 0f) - (keyboard.sKey.isPressed ? 1f : 0f));
 
-        swimVerticalInput = (keyboard.spaceKey.isPressed ? 1f : 0f)
-            - (keyboard.leftCtrlKey.isPressed || keyboard.rightCtrlKey.isPressed ? 1f : 0f);
+        crouchHeld = keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed;
+        bool descendHeld = crouchHeld || keyboard.leftCtrlKey.isPressed || keyboard.rightCtrlKey.isPressed;
+        swimVerticalInput = (keyboard.spaceKey.isPressed ? 1f : 0f) - (descendHeld ? 1f : 0f);
 
         // Update runs every rendered frame, so a brief press cannot be missed
         // between physics ticks.
@@ -130,6 +158,8 @@ public class Player : MonoBehaviour
 
     private void FixedUpdate()
     {
+        UpdateCrouchPosture();
+
         if (currentLadder != null && Time.time >= ignoreLadderUntil)
         {
             HandleLadderMovement();
@@ -150,7 +180,8 @@ public class Player : MonoBehaviour
         direction = Vector3.ClampMagnitude(direction, 1f);
 
         Vector3 velocity = body.linearVelocity;
-        Vector3 targetVelocity = direction * moveSpeed;
+        float currentMoveSpeed = IsCrouched() ? moveSpeed * crouchMoveSpeedMultiplier : moveSpeed;
+        Vector3 targetVelocity = direction * currentMoveSpeed;
         float acceleration = isGrounded ? groundAcceleration : airAcceleration;
 
         velocity.x = Mathf.MoveTowards(velocity.x, targetVelocity.x, acceleration * Time.fixedDeltaTime);
@@ -181,19 +212,105 @@ public class Player : MonoBehaviour
         velocity.z = Mathf.MoveTowards(velocity.z, targetVelocity.z, swimAcceleration * Time.fixedDeltaTime);
 
         float targetVerticalSpeed;
+        float verticalAcceleration;
         if (Mathf.Abs(swimVerticalInput) > 0.01f)
         {
             targetVerticalSpeed = swimVerticalInput * swimSpeed;
+            verticalAcceleration = swimAcceleration;
         }
         else
         {
             float targetHeight = currentWater.SurfaceHeight - floatDepth;
-            targetVerticalSpeed = Mathf.Clamp((targetHeight - body.position.y) * floatStrength, -swimSpeed, swimSpeed);
+            targetVerticalSpeed = Mathf.Clamp(
+                (targetHeight - body.position.y) * floatStrength,
+                -passiveRiseSpeed,
+                passiveRiseSpeed);
+            verticalAcceleration = Mathf.Abs(velocity.y) > passiveRiseSpeed
+                ? swimAcceleration
+                : passiveRiseAcceleration;
         }
 
-        velocity.y = Mathf.MoveTowards(velocity.y, targetVerticalSpeed, swimAcceleration * Time.fixedDeltaTime);
+        velocity.y = Mathf.MoveTowards(velocity.y, targetVerticalSpeed, verticalAcceleration * Time.fixedDeltaTime);
         body.linearVelocity = velocity;
         jumpQueued = false;
+    }
+
+    private void UpdateCrouchPosture()
+    {
+        if (bodyCollider == null)
+        {
+            return;
+        }
+
+        bool wantsToCrouch = crouchHeld && currentWater == null && currentLadder == null;
+        if (!wantsToCrouch && bodyCollider.height < standingColliderHeight && !CanStandUp())
+        {
+            return;
+        }
+
+        float targetHeight = wantsToCrouch ? crouchHeight : standingColliderHeight;
+        float nextHeight = Mathf.MoveTowards(
+            bodyCollider.height,
+            targetHeight,
+            crouchTransitionSpeed * Time.fixedDeltaTime);
+
+        bodyCollider.height = nextHeight;
+        bodyCollider.center = standingColliderCenter
+            + Vector3.down * ((standingColliderHeight - nextHeight) * 0.5f);
+
+        if (viewTransform != null)
+        {
+            float crouchAmount = Mathf.InverseLerp(standingColliderHeight, crouchHeight, nextHeight);
+            viewTransform.localPosition = standingViewLocalPosition + Vector3.down * (crouchViewDrop * crouchAmount);
+        }
+    }
+
+    private bool CanStandUp()
+    {
+        float radiusScale = Mathf.Max(Mathf.Abs(transform.lossyScale.x), Mathf.Abs(transform.lossyScale.z));
+        float checkRadius = bodyCollider.radius * radiusScale * 0.95f;
+        Vector3 currentTop = transform.TransformPoint(
+            bodyCollider.center + Vector3.up * (bodyCollider.height * 0.5f - bodyCollider.radius));
+        Vector3 standingTop = transform.TransformPoint(
+            standingColliderCenter + Vector3.up * (standingColliderHeight * 0.5f - bodyCollider.radius));
+
+        int hitCount = Physics.OverlapCapsuleNonAlloc(
+            currentTop,
+            standingTop,
+            checkRadius,
+            overheadColliders,
+            Physics.AllLayers,
+            QueryTriggerInteraction.Ignore);
+
+        for (int index = 0; index < hitCount; index++)
+        {
+            Collider hit = overheadColliders[index];
+            if (hit != null && hit != bodyCollider && hit.attachedRigidbody != body)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private bool IsCrouched()
+    {
+        return bodyCollider != null && bodyCollider.height < standingColliderHeight - 0.01f;
+    }
+
+    private void RestoreStandingPosture()
+    {
+        if (bodyCollider != null && standingColliderHeight > 0f)
+        {
+            bodyCollider.height = standingColliderHeight;
+            bodyCollider.center = standingColliderCenter;
+        }
+
+        if (viewTransform != null)
+        {
+            viewTransform.localPosition = standingViewLocalPosition;
+        }
     }
 
     private void HandleLadderMovement()
