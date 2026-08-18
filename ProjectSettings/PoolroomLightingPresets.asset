@@ -12,11 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 0}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp-Editor::PoolroomLightingPresetState
-  dataVersion: 1
+  dataVersion: 2
   hasLastSavedValues: 1
   lastSavedValues:
     presetName: Last Saved Values
     roomBrightness: 1.46
+    poolBrightness: 1.46
     overallBloom: 0.5
     chromaticAberration: 1
     visualNoise: 1
@@ -51,6 +52,7 @@ MonoBehaviour:
   namedPresets:
   - presetName: Crazypoolroom
     roomBrightness: 1.46
+    poolBrightness: 1.46
     overallBloom: 0.5
     chromaticAberration: 1
     visualNoise: 1

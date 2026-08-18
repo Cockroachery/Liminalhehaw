@@ -10,8 +10,6 @@ Prompts:
 
 Work on the shadows. They look really chunky and unsmooth.
 
-Add ajustable chromatic abberation and noise scales for visual effects on the player camera (and put it under the poolroom lighting tab)
-Ajust the lighting to have more bloom but be a bit darker/more creepy
 add curved, weird, and diverse stairs in the pool to allow for easy exit and add to the liminal space theme.
 
 
@@ -21,3 +19,4 @@ Make it so that you can sink into water by pressing shift, and out of the water,
 Make sure the under-pool lighting is still red-lit. Maybe add some under-water pool lights with bloom or beam effects. 
 Make the inside pool lights more line-ish and strange. Add more, and have some of them be on the floor, too.
 Add underwater slight blur and dust particle effects.
+Add ajustable chromatic abberation and noise scales for visual effects on the player camera (and put it under the poolroom lighting tab)
