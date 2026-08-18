@@ -211,7 +211,7 @@ public class Player : MonoBehaviour
         }
 
         Vector3 ladderVelocity = Vector3.up * (moveInput.y * ladderClimbSpeed)
-            + currentLadder.transform.right * (moveInput.x * ladderClimbSpeed * 0.5f);
+            - currentLadder.transform.right * (moveInput.x * ladderClimbSpeed * 0.5f);
         body.linearVelocity = ladderVelocity;
         jumpQueued = false;
     }
