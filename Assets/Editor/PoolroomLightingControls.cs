@@ -66,6 +66,7 @@ internal sealed class PoolroomLightingState : ScriptableSingleton<PoolroomLighti
 [FilePath("ProjectSettings/PoolroomLightingPresets.asset", FilePathAttribute.Location.ProjectFolder)]
 internal sealed class PoolroomLightingPresetState : ScriptableSingleton<PoolroomLightingPresetState>
 {
+    public int dataVersion;
     public bool hasLastSavedValues;
     public PoolroomLightingPreset lastSavedValues;
     public List<PoolroomLightingPreset> namedPresets = new List<PoolroomLightingPreset>();
@@ -87,6 +88,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
     private const string WallBeamPrefabPath = "Assets/Poolroom/Cracks/Lighting/Wall Crack Light Beam.prefab";
     private const string FloorBeamPrefabPath = "Assets/Poolroom/Cracks/Lighting/Floor Crack Light Beam.prefab";
     private const string SelectedPageKey = "LiminalPoolroom.LightingControls.SelectedPage";
+    private const int SignedFisheyePresetVersion = 1;
 
     private static readonly string[] PageNames =
     {
@@ -175,6 +177,28 @@ internal sealed class PoolroomLightingControls : EditorWindow
         "Faded VHS"
     };
 
+    private static void MigratePresetFisheyeValues()
+    {
+        PoolroomLightingPresetState state = PoolroomLightingPresetState.instance;
+        if (state.dataVersion >= SignedFisheyePresetVersion)
+            return;
+
+        if (state.lastSavedValues != null)
+            state.lastSavedValues.fisheyeStrength = Mathf.Clamp(-state.lastSavedValues.fisheyeStrength, -1f, 1f);
+
+        if (state.namedPresets != null)
+        {
+            foreach (PoolroomLightingPreset preset in state.namedPresets)
+            {
+                if (preset != null)
+                    preset.fisheyeStrength = Mathf.Clamp(-preset.fisheyeStrength, -1f, 1f);
+            }
+        }
+
+        state.dataVersion = SignedFisheyePresetVersion;
+        state.SaveState();
+    }
+
     [MenuItem("Liminal Poolroom/Lighting Controls", false, 1)]
     internal static void OpenWindow()
     {
@@ -186,6 +210,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
 
     private void OnEnable()
     {
+        MigratePresetFisheyeValues();
         selectedPage = Mathf.Clamp(EditorPrefs.GetInt(SelectedPageKey, 0), 0, PageNames.Length - 1);
         wallValues = new CrackValues
         {
@@ -329,8 +354,8 @@ internal sealed class PoolroomLightingControls : EditorWindow
                 new GUIContent("Bright-Area Noise Reduction", "Higher values keep bright tiles cleaner while preserving more noise in dark areas."),
                 noiseResponse, 0f, 1f);
             float newFisheyeStrength = EditorGUILayout.Slider(
-                new GUIContent("Fisheye Strength", "Bends the edges of the player's view outward like a wide fisheye lens. Zero turns it off."),
-                fisheyeStrength, 0f, 1f);
+                new GUIContent("Fisheye Strength", "Negative values bend the view outward like a wide fisheye lens. Positive values pinch the view inward. Zero turns distortion off."),
+                fisheyeStrength, -1f, 1f);
             float newFieldOfView = cameraFieldOfView;
             using (new EditorGUI.DisabledScope(!sceneIsOpen))
             {
@@ -839,7 +864,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
             visualNoise = grain.intensity.value;
             noiseScale = grain.type.value;
             noiseResponse = grain.response.value;
-            fisheyeStrength = Mathf.Clamp01(-lensDistortion.intensity.value);
+            fisheyeStrength = lensDistortion.intensity.value;
             cameraColorFilter = colorAdjustments.colorFilter.value;
             cameraSaturation = colorAdjustments.saturation.value;
             cameraContrast = colorAdjustments.contrast.value;
@@ -886,7 +911,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
         grain.intensity.value = visualNoise;
         grain.type.value = noiseScale;
         grain.response.value = noiseResponse;
-        lensDistortion.intensity.value = -fisheyeStrength;
+        lensDistortion.intensity.value = fisheyeStrength;
         colorAdjustments.colorFilter.value = cameraColorFilter;
         colorAdjustments.saturation.value = cameraSaturation;
         colorAdjustments.contrast.value = cameraContrast;

@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 0}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp-Editor::PoolroomLightingPresetState
+  dataVersion: 1
   hasLastSavedValues: 1
   lastSavedValues:
     presetName: Last Saved Values
@@ -21,7 +22,7 @@ MonoBehaviour:
     visualNoise: 1
     noiseResponse: 1
     noiseScale: 1
-    fisheyeStrength: 0.2
+    fisheyeStrength: -0.2
     cameraFieldOfView: 60
     cameraColorFilter: {r: 0.76026666, g: 0.7660377, b: 0.46684936, a: 1}
     cameraSaturation: 54.8
@@ -47,4 +48,37 @@ MonoBehaviour:
       castReach: 3.86
       beamBrightness: 150
       beamLength: 4
-  namedPresets: []
+  namedPresets:
+  - presetName: Crazypoolroom
+    roomBrightness: 1.46
+    overallBloom: 0.5
+    chromaticAberration: 1
+    visualNoise: 1
+    noiseResponse: 1
+    noiseScale: 1
+    fisheyeStrength: -0.2
+    cameraFieldOfView: 60
+    cameraColorFilter: {r: 0.76026666, g: 0.7660377, b: 0.46684936, a: 1}
+    cameraSaturation: 54.8
+    cameraContrast: 100
+    cameraHueShift: -0
+    cameraExposure: 0.25
+    cameraTemperature: -100
+    cameraTint: 5.5
+    cameraVignette: 0.472
+    wallCracks:
+      glow: 6
+      halo: 3
+      haloWidth: 9.07
+      castBrightness: 6
+      castReach: 5
+      beamBrightness: 150
+      beamLength: 4
+    floorCracks:
+      glow: 3.94
+      halo: 1.38
+      haloWidth: 4.43
+      castBrightness: 76
+      castReach: 3.86
+      beamBrightness: 150
+      beamLength: 4
