@@ -368,14 +368,14 @@ internal sealed class PoolroomLightingControls : EditorWindow
                 }
             }
 
-            if (GUILayout.Button("Restore Subtle Camera Effects"))
+            if (GUILayout.Button("Reset All Camera Effects to Off"))
             {
-                chromaticAberration = 0.08f;
-                visualNoise = 0.08f;
-                noiseScale = FilmGrainLookup.Medium3;
-                noiseResponse = 0.8f;
-                fisheyeStrength = 0.08f;
-                cameraFieldOfView = 70f;
+                chromaticAberration = 0f;
+                visualNoise = 0f;
+                noiseScale = FilmGrainLookup.Thin1;
+                noiseResponse = 0f;
+                fisheyeStrength = 0f;
+                cameraFieldOfView = 60f;
                 SetNeutralColorFilter();
                 ApplyPlayerCameraEffects();
                 if (sceneIsOpen)
