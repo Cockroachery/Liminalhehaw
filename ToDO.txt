@@ -15,3 +15,4 @@ Make sure the under-pool lighting is still red-lit. Maybe add some under-water p
 Add underwater slight blur and dust particle effects.
 Add ajustable chromatic abberation and noise scales for visual effects on the player camera (and tell me where you put them when you're done)
 Ajust the lighting to have more bloom but be a bit darker/more creepy
+add curved, weird, and diverse stairs in the pool to allow for easy exit and add to the liminal space theme.
