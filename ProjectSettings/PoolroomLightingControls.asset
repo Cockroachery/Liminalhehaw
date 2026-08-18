@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 0}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-Editor::PoolroomLightingState
-  dataVersion: 2
+  dataVersion: 3
   roomBrightness: 1.46
   poolBrightness: 2.5
   roomLightBaselines:

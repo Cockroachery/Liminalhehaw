@@ -91,14 +91,14 @@ internal sealed class PoolroomLightingControls : EditorWindow
     private const string FloorTubePrefabPath = "Assets/Poolroom/Cracks/Lighting/Floor Crack Tube Light.prefab";
     private const string WallBeamPrefabPath = "Assets/Poolroom/Cracks/Lighting/Wall Crack Light Beam.prefab";
     private const string FloorBeamPrefabPath = "Assets/Poolroom/Cracks/Lighting/Floor Crack Light Beam.prefab";
-    private const string PoolSurfaceMaterialPath = "Assets/Poolroom/Materials/Luminous Pool Interior Tiles.mat";
+    private const string PoolSurfaceMaterialPath = "Assets/Poolroom/Materials/Pool Interior Light Sheet.mat";
+    private const string PoolInteriorLightSheetRootName = "Pool Interior Light Sheets";
     private const string SelectedPageKey = "LiminalPoolroom.LightingControls.SelectedPage";
     private const int SignedFisheyePresetVersion = 1;
     private const int SeparatePoolLightingPresetVersion = 2;
     private const int SeparatePoolLightingStateVersion = 1;
     private const int PoolSurfaceGlowStateVersion = 2;
-
-    private static readonly Color PoolSurfaceGlowAt100Percent = new Color(0.6f, 0.1f, 0.2f, 1f);
+    private const int PoolInteriorLightSheetStateVersion = 3;
 
     private static readonly string[] PageNames =
     {
@@ -189,7 +189,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
     private static void MigrateLightingState()
     {
         PoolroomLightingState state = PoolroomLightingState.instance;
-        if (state.dataVersion >= PoolSurfaceGlowStateVersion)
+        if (state.dataVersion >= PoolInteriorLightSheetStateVersion)
             return;
 
         state.roomLightBaselines ??= new List<PoolroomRoomLightBaseline>();
@@ -215,7 +215,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
         if (state.dataVersion < PoolSurfaceGlowStateVersion)
             state.poolBrightness = ReadCurrentPoolBrightness(state);
 
-        state.dataVersion = PoolSurfaceGlowStateVersion;
+        state.dataVersion = PoolInteriorLightSheetStateVersion;
         state.SaveState();
     }
 
@@ -385,16 +385,16 @@ internal sealed class PoolroomLightingControls : EditorWindow
         using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
         {
             EditorGUILayout.LabelField("Pool Surface Lighting", EditorStyles.boldLabel);
-            int poolLightCount = sceneIsOpen ? FindPoolLights().Count : 0;
+            int poolSheetCount = sceneIsOpen ? FindPoolInteriorLightSheets().Count : 0;
             EditorGUILayout.LabelField(sceneIsOpen
-                ? $"Adjusts the softly glowing pool walls and floor, plus {poolLightCount} supporting pool lamps. Crack lighting is excluded."
+                ? $"Adjusts {poolSheetCount} thin light sheets placed only on the underwater floor and inner walls. Exterior and crack lighting are excluded."
                 : "Pool-light controls become available when the poolroom scene is open.", EditorStyles.wordWrappedMiniLabel);
 
             using (new EditorGUI.DisabledScope(!sceneIsOpen))
             {
                 float oldPoolBrightness = PoolroomLightingState.instance.poolBrightness;
                 float newPoolBrightness = EditorGUILayout.Slider(
-                    new GUIContent("Pool Brightness", "Controls the pool walls' and floor's self-lighting, along with the supporting pool lamps."),
+                    new GUIContent("Pool Brightness", "Controls only the transparent light sheets lining the inside of the underwater pool."),
                     oldPoolBrightness, 0f, 2.5f);
                 if (!Mathf.Approximately(oldPoolBrightness, newPoolBrightness))
                     ApplyPoolBrightness(newPoolBrightness);
@@ -1120,6 +1120,28 @@ internal sealed class PoolroomLightingControls : EditorWindow
             .ToList();
     }
 
+    private static List<Renderer> FindPoolInteriorLightSheets()
+    {
+        Scene scene = SceneManager.GetActiveScene();
+        if (!scene.IsValid() || scene.path != ScenePath)
+            return new List<Renderer>();
+
+        return scene.GetRootGameObjects()
+            .SelectMany(root => root.GetComponentsInChildren<Renderer>(true))
+            .Where(renderer => HasNamedAncestor(renderer.transform, PoolInteriorLightSheetRootName))
+            .ToList();
+    }
+
+    private static bool HasNamedAncestor(Transform transform, string objectName)
+    {
+        for (Transform current = transform; current != null; current = current.parent)
+        {
+            if (current.name == objectName)
+                return true;
+        }
+        return false;
+    }
+
     private static bool IsPoolLight(Light light)
     {
         return light != null &&
@@ -1233,25 +1255,9 @@ internal sealed class PoolroomLightingControls : EditorWindow
 
     private static void ApplyPoolBrightness(float brightness)
     {
-        EnsurePoolLightBaselines();
         PoolroomLightingState state = PoolroomLightingState.instance;
-        List<Light> lights = FindPoolLights();
-        Undo.RecordObjects(lights.Cast<UnityEngine.Object>().ToArray(), "Adjust Poolroom Pool Lights");
-
-        foreach (Light light in lights)
-        {
-            string id = GlobalObjectId.GetGlobalObjectIdSlow(light).ToString();
-            PoolroomRoomLightBaseline baseline = state.poolLightBaselines.FirstOrDefault(record => record.globalObjectId == id);
-            if (baseline != null)
-            {
-                light.intensity = baseline.intensity * brightness;
-                EditorUtility.SetDirty(light);
-            }
-        }
-
-        state.poolBrightness = brightness;
-        ApplyPoolSurfaceGlow(brightness, true);
-        EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+        state.poolBrightness = Mathf.Clamp(brightness, 0f, 2.5f);
+        ApplyPoolSurfaceGlow(state.poolBrightness, true);
         SceneView.RepaintAll();
     }
 
@@ -1261,26 +1267,14 @@ internal sealed class PoolroomLightingControls : EditorWindow
         if (material == null)
             return;
 
-        Color emissiveColor = PoolSurfaceGlowAt100Percent * Mathf.Max(0f, brightness);
-        emissiveColor.a = 1f;
-        Color currentColor = material.GetColor("_EmissiveColor");
-        if (Approximately(currentColor, emissiveColor))
+        float clampedBrightness = Mathf.Clamp(brightness, 0f, 2.5f);
+        if (Mathf.Approximately(material.GetFloat("_Brightness"), clampedBrightness))
             return;
 
         if (recordUndo)
-            Undo.RecordObject(material, "Adjust Pool Surface Glow");
-        material.SetColor("_EmissiveColorLDR", PoolSurfaceGlowAt100Percent);
-        material.SetColor("_EmissiveColor", emissiveColor);
-        material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            Undo.RecordObject(material, "Adjust Underwater Pool Light Sheets");
+        material.SetFloat("_Brightness", clampedBrightness);
         EditorUtility.SetDirty(material);
-    }
-
-    private static bool Approximately(Color first, Color second)
-    {
-        return Mathf.Approximately(first.r, second.r) &&
-               Mathf.Approximately(first.g, second.g) &&
-               Mathf.Approximately(first.b, second.b) &&
-               Mathf.Approximately(first.a, second.a);
     }
 
     private static void CaptureCurrentRoomLightsAsBaseline()
