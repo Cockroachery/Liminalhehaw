@@ -1,0 +1,9 @@
+To Do:
+
+Make plants/ room deco
+make title screen
+add music
+
+make collums bigger
+add splash + splash noise
+add 3d models
