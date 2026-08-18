@@ -60,6 +60,8 @@ internal sealed class PoolroomLightingControls : EditorWindow
     private float visualNoise;
     private float noiseResponse;
     private FilmGrainLookup noiseScale;
+    private float fisheyeStrength;
+    private float cameraFieldOfView = 60f;
     private CrackValues wallValues;
     private CrackValues floorValues;
 
@@ -212,6 +214,16 @@ internal sealed class PoolroomLightingControls : EditorWindow
             float newNoiseResponse = EditorGUILayout.Slider(
                 new GUIContent("Bright-Area Noise Reduction", "Higher values keep bright tiles cleaner while preserving more noise in dark areas."),
                 noiseResponse, 0f, 1f);
+            float newFisheyeStrength = EditorGUILayout.Slider(
+                new GUIContent("Fisheye Strength", "Bends the edges of the player's view outward like a wide fisheye lens. Zero turns it off."),
+                fisheyeStrength, 0f, 1f);
+            float newFieldOfView = cameraFieldOfView;
+            using (new EditorGUI.DisabledScope(!sceneIsOpen))
+            {
+                newFieldOfView = EditorGUILayout.Slider(
+                    new GUIContent("Field of View", "Controls how wide the player's view is. Higher values show more of the room; lower values feel zoomed in."),
+                    cameraFieldOfView, 40f, 120f);
+            }
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -219,7 +231,12 @@ internal sealed class PoolroomLightingControls : EditorWindow
                 visualNoise = newVisualNoise;
                 noiseScale = NoiseScales[Mathf.Clamp(newNoiseScale, 0, NoiseScales.Length - 1)];
                 noiseResponse = newNoiseResponse;
+                fisheyeStrength = newFisheyeStrength;
+                bool fieldOfViewChanged = !Mathf.Approximately(cameraFieldOfView, newFieldOfView);
+                cameraFieldOfView = newFieldOfView;
                 ApplyPlayerCameraEffects();
+                if (fieldOfViewChanged)
+                    ApplyPlayerCameraFieldOfView();
             }
 
             if (GUILayout.Button("Restore Subtle Camera Effects"))
@@ -228,7 +245,11 @@ internal sealed class PoolroomLightingControls : EditorWindow
                 visualNoise = 0.08f;
                 noiseScale = FilmGrainLookup.Medium3;
                 noiseResponse = 0.8f;
+                fisheyeStrength = 0.08f;
+                cameraFieldOfView = 70f;
                 ApplyPlayerCameraEffects();
+                if (sceneIsOpen)
+                    ApplyPlayerCameraFieldOfView();
             }
         }
     }
@@ -365,12 +386,17 @@ internal sealed class PoolroomLightingControls : EditorWindow
         VolumeProfile profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(BloomProfilePath);
         if (profile != null &&
             profile.TryGet(out ChromaticAberration chromatic) &&
-            profile.TryGet(out FilmGrain grain))
+            profile.TryGet(out FilmGrain grain) &&
+            profile.TryGet(out LensDistortion lensDistortion))
         {
             chromaticAberration = chromatic.intensity.value;
             visualNoise = grain.intensity.value;
             noiseScale = grain.type.value;
             noiseResponse = grain.response.value;
+            fisheyeStrength = Mathf.Clamp01(-lensDistortion.intensity.value);
+            Camera playerCamera = FindPlayerCamera();
+            if (playerCamera != null)
+                cameraFieldOfView = playerCamera.fieldOfView;
             return;
         }
 
@@ -378,6 +404,9 @@ internal sealed class PoolroomLightingControls : EditorWindow
         visualNoise = 0f;
         noiseScale = FilmGrainLookup.Medium3;
         noiseResponse = 0.8f;
+        fisheyeStrength = 0f;
+        Camera fallbackCamera = FindPlayerCamera();
+        cameraFieldOfView = fallbackCamera != null ? fallbackCamera.fieldOfView : 60f;
     }
 
     private void ApplyPlayerCameraEffects()
@@ -385,22 +414,52 @@ internal sealed class PoolroomLightingControls : EditorWindow
         VolumeProfile profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(BloomProfilePath);
         if (profile == null ||
             !profile.TryGet(out ChromaticAberration chromatic) ||
-            !profile.TryGet(out FilmGrain grain))
+            !profile.TryGet(out FilmGrain grain) ||
+            !profile.TryGet(out LensDistortion lensDistortion))
         {
             Debug.LogError("Poolroom Lighting Controls could not find the player camera effects in the global poolroom profile.");
             return;
         }
 
-        Undo.RecordObjects(new UnityEngine.Object[] { chromatic, grain }, "Adjust Player Camera Effects");
+        Undo.RecordObjects(new UnityEngine.Object[] { chromatic, grain, lensDistortion }, "Adjust Player Camera Effects");
         chromatic.intensity.value = chromaticAberration;
         grain.intensity.value = visualNoise;
         grain.type.value = noiseScale;
         grain.response.value = noiseResponse;
+        lensDistortion.intensity.value = -fisheyeStrength;
         EditorUtility.SetDirty(chromatic);
         EditorUtility.SetDirty(grain);
+        EditorUtility.SetDirty(lensDistortion);
         EditorUtility.SetDirty(profile);
         AssetDatabase.SaveAssets();
         SceneView.RepaintAll();
+    }
+
+    private void ApplyPlayerCameraFieldOfView()
+    {
+        Camera playerCamera = FindPlayerCamera();
+        if (playerCamera == null)
+        {
+            Debug.LogError("Poolroom Lighting Controls could not find the player's Main Camera.");
+            return;
+        }
+
+        Undo.RecordObject(playerCamera, "Adjust Player Camera Field of View");
+        playerCamera.fieldOfView = cameraFieldOfView;
+        EditorUtility.SetDirty(playerCamera);
+        EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+        SceneView.RepaintAll();
+    }
+
+    private static Camera FindPlayerCamera()
+    {
+        Scene scene = SceneManager.GetActiveScene();
+        if (!scene.IsValid() || scene.path != ScenePath)
+            return null;
+
+        return scene.GetRootGameObjects()
+            .SelectMany(root => root.GetComponentsInChildren<Camera>(true))
+            .FirstOrDefault(camera => camera.gameObject.name == "Main Camera");
     }
 
     private static List<Light> FindRoomLights()
