@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &5709667078141502849
+--- !u!1 &3983198937062407393
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,23 +8,23 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 7887683167997750560}
-  - component: {fileID: 6358906279229643002}
-  - component: {fileID: 3865510799233735278}
+  - component: {fileID: 8097160315648897203}
+  - component: {fileID: 90052860000287787}
+  - component: {fileID: 6641101416773725267}
   m_Layer: 0
-  m_Name: Wall Crack Tube Light
+  m_Name: Crack Light Beam
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &7887683167997750560
+--- !u!4 &8097160315648897203
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5709667078141502849}
+  m_GameObject: {fileID: 3983198937062407393}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -33,21 +33,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!108 &6358906279229643002
+--- !u!108 &90052860000287787
 Light:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5709667078141502849}
+  m_GameObject: {fileID: 3983198937062407393}
   m_Enabled: 1
   serializedVersion: 13
-  m_Type: 7
-  m_Color: {r: 1, g: 0.018, b: 0.004, a: 1}
-  m_Intensity: 70
-  m_Range: 1.65
-  m_SpotAngle: 30
-  m_InnerSpotAngle: 21.80208
+  m_Type: 0
+  m_Color: {r: 1, g: 0.015, b: 0.004, a: 1}
+  m_Intensity: 42
+  m_Range: 1.25
+  m_SpotAngle: 17
+  m_InnerSpotAngle: 7
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
     m_Type: 0
@@ -85,12 +85,12 @@ Light:
   m_RenderingLayerMask: 1
   m_Lightmapping: 4
   m_LightShadowCasterMode: 0
-  m_AreaSize: {x: 0.65, y: 0.035}
-  m_BounceIntensity: 0.25
+  m_AreaSize: {x: 1, y: 1}
+  m_BounceIntensity: 0
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 1.9749999}
-  m_UseBoundingSphereOverride: 1
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
   m_ShapeRadius: 0.025
@@ -98,13 +98,13 @@ Light:
   m_LightUnit: 0
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
---- !u!114 &3865510799233735278
+--- !u!114 &6641101416773725267
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5709667078141502849}
+  m_GameObject: {fileID: 3983198937062407393}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7a68c43fe1f2a47cfa234b5eeaa98012, type: 3}
@@ -129,11 +129,11 @@ MonoBehaviour:
   m_ObsoleteContactShadows: 0
   m_SpotIESCutoffPercent: 100
   m_LightDimmer: 1
-  m_VolumetricDimmer: 0.05
+  m_VolumetricDimmer: 0.42
   m_FadeDistance: 45
   m_VolumetricFadeDistance: 50
-  m_AffectDiffuse: 1
-  m_AffectSpecular: 1
+  m_AffectDiffuse: 0
+  m_AffectSpecular: 0
   m_NonLightmappedOnly: 0
   m_SoftnessScale: 1
   m_UseCustomSpotLightShadowCone: 0

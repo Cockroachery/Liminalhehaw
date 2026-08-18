@@ -4,10 +4,10 @@ Shader "Liminal/Underwater Crack Sprite"
     {
         [PerRendererData] _MainTex ("Crack Sprite", 2D) = "white" {}
         [HDR] _TintColor ("Glow Tint", Color) = (1, 0.72, 0.48, 1)
-        _EmissionIntensity ("Glow Strength", Range(0, 12)) = 4
+        _EmissionIntensity ("Glow Strength", Range(0, 12)) = 2.55
         [HDR] _HaloColor ("Crack-Shaped Halo Color", Color) = (1, 0.035, 0.01, 1)
-        _HaloIntensity ("Crack-Shaped Halo Strength", Range(0, 8)) = 2
-        _HaloRadius ("Crack-Shaped Halo Width", Range(1, 12)) = 5
+        _HaloIntensity ("Crack-Shaped Halo Strength", Range(0, 8)) = 0.8
+        _HaloRadius ("Crack-Shaped Halo Width", Range(1, 12)) = 3.5
         _AlphaBoost ("Edge Strength", Range(0.25, 4)) = 1.35
         _Cutoff ("Invisible Edge Cutoff", Range(0, 0.25)) = 0.015
     }
