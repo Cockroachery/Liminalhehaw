@@ -60,11 +60,16 @@ public class Player : MonoBehaviour
     private SwimmableWater currentWater;
     private ClimbableLadder currentLadder;
     private readonly Collider[] overheadColliders = new Collider[16];
+    private bool gameplayInputEnabled = true;
+    private bool initialBodyIsKinematic;
+
+    public bool GameplayInputEnabled => gameplayInputEnabled;
 
     private void Awake()
     {
         body = GetComponent<Rigidbody>();
         bodyCollider = GetComponent<CapsuleCollider>();
+        initialBodyIsKinematic = body.isKinematic;
         body.freezeRotation = true;
 
         if (bodyCollider != null)
@@ -97,7 +102,7 @@ public class Player : MonoBehaviour
 
     private void OnEnable()
     {
-        SetCursorLocked(true);
+        SetCursorLocked(gameplayInputEnabled);
     }
 
     private void OnDisable()
@@ -105,6 +110,7 @@ public class Player : MonoBehaviour
         if (body != null)
         {
             body.useGravity = true;
+            body.isKinematic = initialBodyIsKinematic;
         }
 
         RestoreStandingPosture();
@@ -113,6 +119,12 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
+        if (!gameplayInputEnabled)
+        {
+            ClearGameplayInput();
+            return;
+        }
+
         ReadMouseLookInput();
 
         Keyboard keyboard = Keyboard.current;
@@ -171,16 +183,17 @@ public class Player : MonoBehaviour
         // view here keeps camera motion in step with rendering instead of physics.
         transform.rotation = Quaternion.Euler(0f, displayedYaw, 0f);
 
+        float activeRockStrength = gameplayInputEnabled ? cameraRockStrength : 0f;
         float rockTime = Time.unscaledTime * Mathf.Max(cameraRockSpeed, 0.1f);
         float rockPitch = (
             Mathf.Sin(rockTime * 1.31f + 0.8f) * 0.22f
-            + Mathf.Sin(rockTime * 0.47f + 2.1f) * 0.08f) * cameraRockStrength;
+            + Mathf.Sin(rockTime * 0.47f + 2.1f) * 0.08f) * activeRockStrength;
         float rockYaw = (
             Mathf.Sin(rockTime * 0.73f + 1.4f) * 0.16f
-            + Mathf.Sin(rockTime * 1.83f + 0.2f) * 0.05f) * cameraRockStrength;
+            + Mathf.Sin(rockTime * 1.83f + 0.2f) * 0.05f) * activeRockStrength;
         float rockRoll = (
             Mathf.Sin(rockTime) * 0.82f
-            + Mathf.Sin(rockTime * 0.39f + 2.7f) * 0.18f) * cameraRockStrength;
+            + Mathf.Sin(rockTime * 0.39f + 2.7f) * 0.18f) * activeRockStrength;
 
         viewTransform.localRotation = Quaternion.Euler(
             displayedPitch + rockPitch,
@@ -214,12 +227,47 @@ public class Player : MonoBehaviour
     {
         if (hasFocus)
         {
-            SetCursorLocked(true);
+            SetCursorLocked(gameplayInputEnabled);
         }
+    }
+
+    public void SetGameplayInputEnabled(bool isEnabled)
+    {
+        gameplayInputEnabled = isEnabled;
+        ClearGameplayInput();
+
+        if (body != null)
+        {
+            if (!isEnabled)
+            {
+                body.linearVelocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+                body.isKinematic = true;
+            }
+            else
+            {
+                body.isKinematic = initialBodyIsKinematic;
+            }
+        }
+
+        SetCursorLocked(isEnabled);
+    }
+
+    private void ClearGameplayInput()
+    {
+        moveInput = Vector2.zero;
+        swimVerticalInput = 0f;
+        crouchHeld = false;
+        jumpQueued = false;
     }
 
     private void FixedUpdate()
     {
+        if (!gameplayInputEnabled)
+        {
+            return;
+        }
+
         UpdateCrouchPosture();
 
         if (currentLadder != null && Time.time >= ignoreLadderUntil)

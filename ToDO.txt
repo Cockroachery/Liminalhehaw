@@ -4,8 +4,6 @@ General To Do:
 - Make title screen; restrict movement of player, until a "play" button is clicked. The play button will be acompanied by your starting spot but with heavy screen blur.
 - Add music
 - General sound effects like a water splash noise (+ feet for walking)
-- Add the 3d models in, like the vases and creatures
-- Add camera rocking effect, and pixelation effect
 
 Prompts:
 
@@ -22,3 +20,4 @@ Make the inside pool lights more line-ish and strange. Add more, and have some o
 Add underwater slight blur and dust particle effects.
 Add ajustable chromatic abberation and noise scales for visual effects on the player camera (and put it under the poolroom lighting tab)
 add curved, weird, and diverse stairs in the pool to allow for easy exit and add to the liminal space theme.
+Add camera rocking effect, and pixelation effect.

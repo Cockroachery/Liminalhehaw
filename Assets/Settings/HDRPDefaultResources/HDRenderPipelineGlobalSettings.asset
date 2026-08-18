@@ -22,7 +22,8 @@ MonoBehaviour:
       m_CustomPostProcessTypesAsString: []
     m_BeforePostProcessCustomPostProcesses:
       m_InjectionPoint: 1
-      m_CustomPostProcessTypesAsString: []
+      m_CustomPostProcessTypesAsString:
+      - PoolroomTitleBlur, Assembly-CSharp
     m_AfterPostProcessBlursCustomPostProcesses:
       m_InjectionPoint: 4
       m_CustomPostProcessTypesAsString: []
@@ -419,7 +420,8 @@ MonoBehaviour:
           m_CustomPostProcessTypesAsString: []
         m_BeforePostProcessCustomPostProcesses:
           m_InjectionPoint: 1
-          m_CustomPostProcessTypesAsString: []
+          m_CustomPostProcessTypesAsString:
+          - PoolroomTitleBlur, Assembly-CSharp
         m_AfterPostProcessBlursCustomPostProcesses:
           m_InjectionPoint: 4
           m_CustomPostProcessTypesAsString: []
