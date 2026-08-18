@@ -15,11 +15,60 @@ internal sealed class PoolroomRoomLightBaseline
     public float intensity;
 }
 
+[Serializable]
+internal sealed class PoolroomCrackPresetValues
+{
+    public float glow;
+    public float halo;
+    public float haloWidth;
+    public float castBrightness;
+    public float castReach;
+    public float beamBrightness;
+    public float beamLength;
+}
+
+[Serializable]
+internal sealed class PoolroomLightingPreset
+{
+    public string presetName;
+    public float roomBrightness;
+    public float overallBloom;
+    public float chromaticAberration;
+    public float visualNoise;
+    public float noiseResponse;
+    public int noiseScale;
+    public float fisheyeStrength;
+    public float cameraFieldOfView;
+    public Color cameraColorFilter = Color.white;
+    public float cameraSaturation;
+    public float cameraContrast;
+    public float cameraHueShift;
+    public float cameraExposure;
+    public float cameraTemperature;
+    public float cameraTint;
+    public float cameraVignette;
+    public PoolroomCrackPresetValues wallCracks = new PoolroomCrackPresetValues();
+    public PoolroomCrackPresetValues floorCracks = new PoolroomCrackPresetValues();
+}
+
 [FilePath("ProjectSettings/PoolroomLightingControls.asset", FilePathAttribute.Location.ProjectFolder)]
 internal sealed class PoolroomLightingState : ScriptableSingleton<PoolroomLightingState>
 {
     public float roomBrightness = 1f;
     public List<PoolroomRoomLightBaseline> roomLightBaselines = new List<PoolroomRoomLightBaseline>();
+
+    public void SaveState()
+    {
+        Save(true);
+    }
+}
+
+[FilePath("ProjectSettings/PoolroomLightingPresets.asset", FilePathAttribute.Location.ProjectFolder)]
+internal sealed class PoolroomLightingPresetState : ScriptableSingleton<PoolroomLightingPresetState>
+{
+    public bool hasLastSavedValues;
+    public PoolroomLightingPreset lastSavedValues;
+    public List<PoolroomLightingPreset> namedPresets = new List<PoolroomLightingPreset>();
 
     public void SaveState()
     {
@@ -44,7 +93,8 @@ internal sealed class PoolroomLightingControls : EditorWindow
         "Room",
         "Camera",
         "Wall Cracks",
-        "Floor Cracks"
+        "Floor Cracks",
+        "Presets"
     };
 
     private sealed class CrackValues
@@ -82,6 +132,9 @@ internal sealed class PoolroomLightingControls : EditorWindow
     private float cameraVignette;
     private bool showColorFilters = true;
     private int selectedFilterPreset;
+    private int selectedNamedPreset;
+    private string newPresetName = "My Poolroom Look";
+    private string presetMessage;
     private CrackValues wallValues;
     private CrackValues floorValues;
 
@@ -153,6 +206,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
 
         LoadSavedValues();
         EnsureRoomLightBaselines();
+        EnsureLastSavedValues();
     }
 
     private void OnGUI()
@@ -197,6 +251,9 @@ internal sealed class PoolroomLightingControls : EditorWindow
             case 3:
                 DrawCrackSection(floorValues, new Color(1f, 0.86f, 0.72f));
                 break;
+            case 4:
+                DrawPresetSection();
+                break;
         }
 
         EditorGUILayout.Space(12f);
@@ -204,7 +261,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
         using (new EditorGUILayout.HorizontalScope())
         {
             if (GUILayout.Button("Reload Saved Values", GUILayout.Height(28f)))
-                LoadSavedValues();
+                ReloadSavedValues();
             if (GUILayout.Button("Save Scene and Assets", GUILayout.Height(28f)))
                 SaveEverything();
         }
@@ -421,6 +478,264 @@ internal sealed class PoolroomLightingControls : EditorWindow
         }
     }
 
+    private void DrawPresetSection()
+    {
+        PoolroomLightingPresetState presetState = PoolroomLightingPresetState.instance;
+        if (presetState.namedPresets == null)
+            presetState.namedPresets = new List<PoolroomLightingPreset>();
+
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            EditorGUILayout.LabelField("Named Lighting Presets", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField(
+                "A preset captures every page: room brightness, bloom, camera effects, and both crack groups.",
+                EditorStyles.wordWrappedMiniLabel);
+            EditorGUILayout.HelpBox(
+                "Applying a preset is a live preview. Click Save Scene and Assets afterward if you want Reload Saved Values to return to it.",
+                MessageType.Info);
+
+            newPresetName = EditorGUILayout.TextField(
+                new GUIContent("Preset Name", "The name shown in the saved preset list."),
+                newPresetName);
+            if (GUILayout.Button("Save Current Values as Named Preset", GUILayout.Height(28f)))
+                SaveCurrentNamedPreset();
+
+            EditorGUILayout.Space(8f);
+            if (presetState.namedPresets.Count == 0)
+            {
+                EditorGUILayout.HelpBox("No named presets have been saved yet.", MessageType.None);
+            }
+            else
+            {
+                selectedNamedPreset = Mathf.Clamp(selectedNamedPreset, 0, presetState.namedPresets.Count - 1);
+                string[] names = presetState.namedPresets.Select(preset => preset.presetName).ToArray();
+                selectedNamedPreset = EditorGUILayout.Popup("Saved Preset", selectedNamedPreset, names);
+
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("Apply Selected"))
+                        ApplySelectedNamedPreset();
+                    if (GUILayout.Button("Overwrite Selected"))
+                        OverwriteSelectedNamedPreset();
+                    if (GUILayout.Button("Delete Selected"))
+                        DeleteSelectedNamedPreset();
+                }
+            }
+
+            if (!string.IsNullOrEmpty(presetMessage))
+            {
+                EditorGUILayout.Space(5f);
+                EditorGUILayout.HelpBox(presetMessage, MessageType.None);
+            }
+        }
+    }
+
+    private void EnsureLastSavedValues()
+    {
+        PoolroomLightingPresetState presetState = PoolroomLightingPresetState.instance;
+        if (presetState.namedPresets == null)
+            presetState.namedPresets = new List<PoolroomLightingPreset>();
+
+        if (presetState.hasLastSavedValues && presetState.lastSavedValues != null)
+            return;
+
+        presetState.lastSavedValues = CaptureCurrentValues("Last Saved Values");
+        presetState.hasLastSavedValues = true;
+        presetState.SaveState();
+    }
+
+    private PoolroomLightingPreset CaptureCurrentValues(string presetName)
+    {
+        return new PoolroomLightingPreset
+        {
+            presetName = presetName,
+            roomBrightness = PoolroomLightingState.instance.roomBrightness,
+            overallBloom = overallBloom,
+            chromaticAberration = chromaticAberration,
+            visualNoise = visualNoise,
+            noiseResponse = noiseResponse,
+            noiseScale = (int)noiseScale,
+            fisheyeStrength = fisheyeStrength,
+            cameraFieldOfView = cameraFieldOfView,
+            cameraColorFilter = cameraColorFilter,
+            cameraSaturation = cameraSaturation,
+            cameraContrast = cameraContrast,
+            cameraHueShift = cameraHueShift,
+            cameraExposure = cameraExposure,
+            cameraTemperature = cameraTemperature,
+            cameraTint = cameraTint,
+            cameraVignette = cameraVignette,
+            wallCracks = CaptureCrackValues(wallValues),
+            floorCracks = CaptureCrackValues(floorValues)
+        };
+    }
+
+    private static PoolroomCrackPresetValues CaptureCrackValues(CrackValues values)
+    {
+        return new PoolroomCrackPresetValues
+        {
+            glow = values.glow,
+            halo = values.halo,
+            haloWidth = values.haloWidth,
+            castBrightness = values.castBrightness,
+            castReach = values.castReach,
+            beamBrightness = values.beamBrightness,
+            beamLength = values.beamLength
+        };
+    }
+
+    private void ApplyValues(PoolroomLightingPreset values)
+    {
+        if (values == null)
+            return;
+
+        overallBloom = values.overallBloom;
+        chromaticAberration = values.chromaticAberration;
+        visualNoise = values.visualNoise;
+        noiseResponse = values.noiseResponse;
+        noiseScale = (FilmGrainLookup)values.noiseScale;
+        fisheyeStrength = values.fisheyeStrength;
+        cameraFieldOfView = values.cameraFieldOfView;
+        cameraColorFilter = values.cameraColorFilter;
+        cameraSaturation = values.cameraSaturation;
+        cameraContrast = values.cameraContrast;
+        cameraHueShift = values.cameraHueShift;
+        cameraExposure = values.cameraExposure;
+        cameraTemperature = values.cameraTemperature;
+        cameraTint = values.cameraTint;
+        cameraVignette = values.cameraVignette;
+        CopyCrackValues(values.wallCracks, wallValues);
+        CopyCrackValues(values.floorCracks, floorValues);
+
+        bool sceneIsOpen = SceneManager.GetActiveScene().path == ScenePath;
+        if (sceneIsOpen)
+        {
+            ApplyRoomBrightness(values.roomBrightness);
+            ApplyPlayerCameraFieldOfView();
+        }
+
+        ApplyBloom();
+        ApplyPlayerCameraEffects();
+        ApplyCrackValues(wallValues);
+        ApplyCrackValues(floorValues);
+        Repaint();
+    }
+
+    private static void CopyCrackValues(PoolroomCrackPresetValues source, CrackValues destination)
+    {
+        if (source == null || destination == null)
+            return;
+
+        destination.glow = source.glow;
+        destination.halo = source.halo;
+        destination.haloWidth = source.haloWidth;
+        destination.castBrightness = source.castBrightness;
+        destination.castReach = source.castReach;
+        destination.beamBrightness = source.beamBrightness;
+        destination.beamLength = source.beamLength;
+    }
+
+    private void ReloadSavedValues()
+    {
+        PoolroomLightingPresetState presetState = PoolroomLightingPresetState.instance;
+        if (!presetState.hasLastSavedValues || presetState.lastSavedValues == null)
+        {
+            EnsureLastSavedValues();
+            presetState = PoolroomLightingPresetState.instance;
+        }
+
+        ApplyValues(presetState.lastSavedValues);
+        presetMessage = "Restored the values from the last time Save Scene and Assets was clicked.";
+    }
+
+    private void SaveCurrentNamedPreset()
+    {
+        string trimmedName = (newPresetName ?? string.Empty).Trim();
+        if (string.IsNullOrEmpty(trimmedName))
+        {
+            presetMessage = "Enter a name before saving the preset.";
+            return;
+        }
+
+        PoolroomLightingPresetState presetState = PoolroomLightingPresetState.instance;
+        if (presetState.namedPresets == null)
+            presetState.namedPresets = new List<PoolroomLightingPreset>();
+
+        int existingIndex = presetState.namedPresets.FindIndex(
+            preset => string.Equals(preset.presetName, trimmedName, StringComparison.OrdinalIgnoreCase));
+        PoolroomLightingPreset captured = CaptureCurrentValues(trimmedName);
+        if (existingIndex >= 0)
+        {
+            presetState.namedPresets[existingIndex] = captured;
+            selectedNamedPreset = existingIndex;
+            presetMessage = $"Updated the named preset '{trimmedName}'.";
+        }
+        else
+        {
+            presetState.namedPresets.Add(captured);
+            selectedNamedPreset = presetState.namedPresets.Count - 1;
+            presetMessage = $"Saved a new preset named '{trimmedName}'.";
+        }
+
+        presetState.SaveState();
+    }
+
+    private void ApplySelectedNamedPreset()
+    {
+        PoolroomLightingPresetState presetState = PoolroomLightingPresetState.instance;
+        if (!TryGetSelectedPreset(presetState, out PoolroomLightingPreset preset))
+            return;
+
+        ApplyValues(preset);
+        presetMessage = $"Previewing '{preset.presetName}'. Click Save Scene and Assets to keep it as the reload point.";
+    }
+
+    private void OverwriteSelectedNamedPreset()
+    {
+        PoolroomLightingPresetState presetState = PoolroomLightingPresetState.instance;
+        if (!TryGetSelectedPreset(presetState, out PoolroomLightingPreset existing))
+            return;
+
+        presetState.namedPresets[selectedNamedPreset] = CaptureCurrentValues(existing.presetName);
+        presetState.SaveState();
+        presetMessage = $"Overwrote '{existing.presetName}' with the current values.";
+    }
+
+    private void DeleteSelectedNamedPreset()
+    {
+        PoolroomLightingPresetState presetState = PoolroomLightingPresetState.instance;
+        if (!TryGetSelectedPreset(presetState, out PoolroomLightingPreset selected))
+            return;
+
+        if (!EditorUtility.DisplayDialog(
+                "Delete Lighting Preset",
+                $"Delete the preset '{selected.presetName}'?",
+                "Delete",
+                "Cancel"))
+            return;
+
+        presetState.namedPresets.RemoveAt(selectedNamedPreset);
+        selectedNamedPreset = Mathf.Clamp(selectedNamedPreset, 0, Mathf.Max(0, presetState.namedPresets.Count - 1));
+        presetState.SaveState();
+        presetMessage = $"Deleted the preset '{selected.presetName}'.";
+    }
+
+    private bool TryGetSelectedPreset(
+        PoolroomLightingPresetState presetState,
+        out PoolroomLightingPreset preset)
+    {
+        preset = null;
+        if (presetState.namedPresets == null || presetState.namedPresets.Count == 0)
+        {
+            presetMessage = "There is no saved preset to use yet.";
+            return false;
+        }
+
+        selectedNamedPreset = Mathf.Clamp(selectedNamedPreset, 0, presetState.namedPresets.Count - 1);
+        preset = presetState.namedPresets[selectedNamedPreset];
+        return preset != null;
+    }
+
     private void LoadSavedValues()
     {
         overallBloom = ReadBloomIntensity();
@@ -473,7 +788,6 @@ internal sealed class PoolroomLightingControls : EditorWindow
         EditorUtility.SetDirty(material);
         EditorUtility.SetDirty(tubeLight);
         EditorUtility.SetDirty(beamLight);
-        AssetDatabase.SaveAssets();
         SceneView.RepaintAll();
     }
 
@@ -507,7 +821,6 @@ internal sealed class PoolroomLightingControls : EditorWindow
         bloom.intensity.value = overallBloom;
         EditorUtility.SetDirty(bloom);
         EditorUtility.SetDirty(profile);
-        AssetDatabase.SaveAssets();
         SceneView.RepaintAll();
     }
 
@@ -589,7 +902,6 @@ internal sealed class PoolroomLightingControls : EditorWindow
         EditorUtility.SetDirty(whiteBalance);
         EditorUtility.SetDirty(vignette);
         EditorUtility.SetDirty(profile);
-        AssetDatabase.SaveAssets();
         SceneView.RepaintAll();
     }
 
@@ -750,7 +1062,6 @@ internal sealed class PoolroomLightingControls : EditorWindow
         }
 
         state.roomBrightness = brightness;
-        state.SaveState();
         EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
         SceneView.RepaintAll();
     }
@@ -779,12 +1090,19 @@ internal sealed class PoolroomLightingControls : EditorWindow
         EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
     }
 
-    private static void SaveEverything()
+    private void SaveEverything()
     {
         Scene scene = SceneManager.GetActiveScene();
         if (scene.IsValid() && scene.path == ScenePath && scene.isDirty)
             EditorSceneManager.SaveScene(scene);
+
+        PoolroomLightingState.instance.SaveState();
+        PoolroomLightingPresetState presetState = PoolroomLightingPresetState.instance;
+        presetState.lastSavedValues = CaptureCurrentValues("Last Saved Values");
+        presetState.hasLastSavedValues = true;
+        presetState.SaveState();
         AssetDatabase.SaveAssets();
-        Debug.Log("POOLROOM_LIGHTING_SAVED: Saved the room, camera effects, wall-crack, and floor-crack lighting settings.");
+        presetMessage = "Saved the current values. Reload Saved Values will now return to this setup.";
+        Debug.Log("POOLROOM_LIGHTING_SAVED: Saved the room, camera effects, wall-crack, floor-crack, and reload snapshot settings.");
     }
 }
