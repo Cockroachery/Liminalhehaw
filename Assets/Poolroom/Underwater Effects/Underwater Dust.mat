@@ -19,7 +19,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties:
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs: []
@@ -27,6 +27,6 @@ Material:
     m_Floats:
     - _Softness: 2.7
     m_Colors:
-    - _TintColor: {r: 1, g: 0.2, b: 0.14, a: 0.22}
+    - _TintColor: {r: 1, g: 1, b: 1, a: 0.923}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

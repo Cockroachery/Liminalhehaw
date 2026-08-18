@@ -1654,11 +1654,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
   m_IsGlobal: 0
   priority: 300
-  blendDistance: 0.35
+  blendDistance: 2
   weight: 1
   sharedProfile: {fileID: 11400000, guid: baebe1cbf3dd6784590b7e4577936696, type: 2}
 --- !u!65 &180046794
@@ -7679,15 +7679,15 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 953113785}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.043914437, y: -0.41150832, z: 0.002}
+  m_LocalRotation: {x: -0.10796879, y: 0.008355916, z: -0.002226375, w: 0.99411666}
+  m_LocalPosition: {x: -0.045, y: -0.427, z: 0.022}
   m_LocalScale: {x: 0.24363416, y: 0.24363416, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 673010663}
   - {fileID: 587542338}
   m_Father: {fileID: 422164416}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -12.394, y: 1.003, z: -0.366}
 --- !u!212 &953113787
 SpriteRenderer:
   serializedVersion: 3
@@ -8595,7 +8595,7 @@ MonoBehaviour:
   crouchTransitionSpeed: 6
   crouchViewDrop: 0.6
   crouchMoveSpeedMultiplier: 0.55
-  ladderClimbSpeed: 3.5
+  ladderClimbSpeed: 3.81
   viewTransform: {fileID: 0}
   mouseSensitivity: 0.8
   minimumLookAngle: -80
@@ -9873,7 +9873,7 @@ ParticleSystem:
     startLifetime:
       serializedVersion: 2
       minMaxState: 3
-      scalar: 27
+      scalar: 49.812424
       minScalar: 18
       maxCurve:
         serializedVersion: 2
@@ -10044,8 +10044,8 @@ ParticleSystem:
     startSize:
       serializedVersion: 2
       minMaxState: 3
-      scalar: 0.052
-      minScalar: 0.012
+      scalar: 0.07254201
+      minScalar: 0.032541994
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -10361,7 +10361,7 @@ ParticleSystem:
         m_RotationOrder: 4
     randomizeRotationDirection: 0
     gravitySource: 0
-    maxNumParticles: 420
+    maxNumParticles: 620
     customEmitterVelocity: {x: 0, y: 0, z: 0}
     size3D: 0
     rotation3D: 0
@@ -10626,9 +10626,9 @@ ParticleSystem:
     serializedVersion: 4
     rateOverTime:
       serializedVersion: 2
-      minMaxState: 0
-      scalar: 14
-      minScalar: 10
+      minMaxState: 3
+      scalar: 24.2
+      minScalar: 16.94
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -11252,8 +11252,8 @@ ParticleSystem:
     x:
       serializedVersion: 2
       minMaxState: 3
-      scalar: 0.009
-      minScalar: -0.009
+      scalar: 0.0459
+      minScalar: -0.0459
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -11305,8 +11305,8 @@ ParticleSystem:
     y:
       serializedVersion: 2
       minMaxState: 3
-      scalar: 0.028
-      minScalar: 0.008
+      scalar: 0.056041434
+      minScalar: 0.03604144
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -11358,8 +11358,8 @@ ParticleSystem:
     z:
       serializedVersion: 2
       minMaxState: 3
-      scalar: 0.009
-      minScalar: -0.009
+      scalar: 0.0459
+      minScalar: -0.0459
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -12446,7 +12446,7 @@ ParticleSystem:
     strength:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 0.035
+      scalar: 0.1414
       minScalar: 1
       maxCurve:
         serializedVersion: 2
@@ -17779,7 +17779,7 @@ Transform:
   m_GameObject: {fileID: 1475498505}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.04762268, y: -0.017996788, z: 0.002}
+  m_LocalPosition: {x: -0.048, y: -0.018, z: -0.049}
   m_LocalScale: {x: 0.5819398, y: 0.5819398, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -23250,12 +23250,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SwimmableWater
   surfaceOffset: 0
-  splashMaterial: {fileID: 2100000, guid: 8a5bd150ef5335a45905e938054eecbb, type: 2}
-  rippleMaterial: {fileID: 2100000, guid: b20dafd48595ef04298517a571718523, type: 2}
-  splashDropletCount: 16
-  splashHeight: 4.5
-  rippleLifetime: 1.6
-  rippleSpeed: 2.5
+  splashMaterial: {fileID: 2100000, guid: b20dafd48595ef04298517a571718523, type: 2}
+  rippleMaterial: {fileID: 2100000, guid: ee0d105e7603f3c47938c558f12449e4, type: 2}
+  splashDropletCount: 20
+  splashHeight: 4.99
+  rippleLifetime: 2.19
+  rippleSpeed: 4.24
 --- !u!1 &3001000001
 GameObject:
   m_ObjectHideFlags: 0

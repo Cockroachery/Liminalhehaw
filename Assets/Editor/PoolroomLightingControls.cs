@@ -56,8 +56,40 @@ internal sealed class PoolroomLightingControls : EditorWindow
 
     private Vector2 scroll;
     private float overallBloom;
+    private float chromaticAberration;
+    private float visualNoise;
+    private float noiseResponse;
+    private FilmGrainLookup noiseScale;
     private CrackValues wallValues;
     private CrackValues floorValues;
+
+    private static readonly string[] NoiseScaleNames =
+    {
+        "Fine 1",
+        "Fine 2",
+        "Medium 1",
+        "Medium 2",
+        "Medium 3",
+        "Medium 4",
+        "Medium 5",
+        "Medium 6",
+        "Large 1",
+        "Large 2"
+    };
+
+    private static readonly FilmGrainLookup[] NoiseScales =
+    {
+        FilmGrainLookup.Thin1,
+        FilmGrainLookup.Thin2,
+        FilmGrainLookup.Medium1,
+        FilmGrainLookup.Medium2,
+        FilmGrainLookup.Medium3,
+        FilmGrainLookup.Medium4,
+        FilmGrainLookup.Medium5,
+        FilmGrainLookup.Medium6,
+        FilmGrainLookup.Large01,
+        FilmGrainLookup.Large02
+    };
 
     [MenuItem("Liminal Poolroom/Lighting Controls", false, 1)]
     internal static void OpenWindow()
@@ -158,6 +190,46 @@ internal sealed class PoolroomLightingControls : EditorWindow
                 overallBloom = newBloom;
                 ApplyBloom();
             }
+
+            EditorGUILayout.Space(8f);
+            EditorGUILayout.LabelField("Player Camera Effects", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField(
+                "Adds subtle lens color separation and moving film-like noise to the player's view.",
+                EditorStyles.wordWrappedMiniLabel);
+
+            EditorGUI.BeginChangeCheck();
+            float newChromaticAberration = EditorGUILayout.Slider(
+                new GUIContent("Color Fringing", "Separates colors near the edges of the player camera. Zero turns it off."),
+                chromaticAberration, 0f, 1f);
+            float newVisualNoise = EditorGUILayout.Slider(
+                new GUIContent("Visual Noise", "Strength of the animated film-grain noise. Zero turns it off."),
+                visualNoise, 0f, 1f);
+            int currentNoiseScale = Mathf.Max(0, Array.IndexOf(NoiseScales, noiseScale));
+            int newNoiseScale = EditorGUILayout.Popup(
+                new GUIContent("Noise Scale", "Selects whether the visible noise specks are fine, medium, or large."),
+                currentNoiseScale,
+                NoiseScaleNames);
+            float newNoiseResponse = EditorGUILayout.Slider(
+                new GUIContent("Bright-Area Noise Reduction", "Higher values keep bright tiles cleaner while preserving more noise in dark areas."),
+                noiseResponse, 0f, 1f);
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                chromaticAberration = newChromaticAberration;
+                visualNoise = newVisualNoise;
+                noiseScale = NoiseScales[Mathf.Clamp(newNoiseScale, 0, NoiseScales.Length - 1)];
+                noiseResponse = newNoiseResponse;
+                ApplyPlayerCameraEffects();
+            }
+
+            if (GUILayout.Button("Restore Subtle Camera Effects"))
+            {
+                chromaticAberration = 0.08f;
+                visualNoise = 0.08f;
+                noiseScale = FilmGrainLookup.Medium3;
+                noiseResponse = 0.8f;
+                ApplyPlayerCameraEffects();
+            }
         }
     }
 
@@ -201,6 +273,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
     private void LoadSavedValues()
     {
         overallBloom = ReadBloomIntensity();
+        LoadPlayerCameraEffects();
         LoadCrackValues(wallValues);
         LoadCrackValues(floorValues);
         Repaint();
@@ -282,6 +355,49 @@ internal sealed class PoolroomLightingControls : EditorWindow
         Undo.RecordObject(bloom, "Adjust Poolroom Bloom");
         bloom.intensity.value = overallBloom;
         EditorUtility.SetDirty(bloom);
+        EditorUtility.SetDirty(profile);
+        AssetDatabase.SaveAssets();
+        SceneView.RepaintAll();
+    }
+
+    private void LoadPlayerCameraEffects()
+    {
+        VolumeProfile profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(BloomProfilePath);
+        if (profile != null &&
+            profile.TryGet(out ChromaticAberration chromatic) &&
+            profile.TryGet(out FilmGrain grain))
+        {
+            chromaticAberration = chromatic.intensity.value;
+            visualNoise = grain.intensity.value;
+            noiseScale = grain.type.value;
+            noiseResponse = grain.response.value;
+            return;
+        }
+
+        chromaticAberration = 0f;
+        visualNoise = 0f;
+        noiseScale = FilmGrainLookup.Medium3;
+        noiseResponse = 0.8f;
+    }
+
+    private void ApplyPlayerCameraEffects()
+    {
+        VolumeProfile profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(BloomProfilePath);
+        if (profile == null ||
+            !profile.TryGet(out ChromaticAberration chromatic) ||
+            !profile.TryGet(out FilmGrain grain))
+        {
+            Debug.LogError("Poolroom Lighting Controls could not find the player camera effects in the global poolroom profile.");
+            return;
+        }
+
+        Undo.RecordObjects(new UnityEngine.Object[] { chromatic, grain }, "Adjust Player Camera Effects");
+        chromatic.intensity.value = chromaticAberration;
+        grain.intensity.value = visualNoise;
+        grain.type.value = noiseScale;
+        grain.response.value = noiseResponse;
+        EditorUtility.SetDirty(chromatic);
+        EditorUtility.SetDirty(grain);
         EditorUtility.SetDirty(profile);
         AssetDatabase.SaveAssets();
         SceneView.RepaintAll();
@@ -391,6 +507,6 @@ internal sealed class PoolroomLightingControls : EditorWindow
         if (scene.IsValid() && scene.path == ScenePath && scene.isDirty)
             EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();
-        Debug.Log("POOLROOM_LIGHTING_SAVED: Saved the room, wall-crack, and floor-crack lighting settings.");
+        Debug.Log("POOLROOM_LIGHTING_SAVED: Saved the room, camera effects, wall-crack, and floor-crack lighting settings.");
     }
 }
