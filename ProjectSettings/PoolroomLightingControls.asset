@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &1
+MonoBehaviour:
+  m_ObjectHideFlags: 53
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp-Editor::PoolroomLightingState
+  roomBrightness: 1
+  roomLightBaselines:
+  - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-1281727462-0
+    intensity: 477.4648
+  - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-468807699-0
+    intensity: 477.4648
+  - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-656284585-0
+    intensity: 477.4648
+  - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-1216099051-0
+    intensity: 477.4648
+  - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-2044906991-0
+    intensity: 477.4648
+  - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-693301953-0
+    intensity: 477.4648
+  - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-2050316981-0
+    intensity: 477.4648
+  - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-1479959584-0
+    intensity: 477.4648
+  - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-21261488-0
+    intensity: 477.4648
+  - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-570754876-0
+    intensity: 477.4648
+  - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-1389862513-0
+    intensity: 358.0986
+  - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-1271844779-0
+    intensity: 358.0986
+  - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-1699272012-0
+    intensity: 143.23944

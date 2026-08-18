@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 90052860000287787}
   - component: {fileID: 6641101416773725267}
   m_Layer: 0
-  m_Name: Crack Light Beam
+  m_Name: Wall Crack Light Beam
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
