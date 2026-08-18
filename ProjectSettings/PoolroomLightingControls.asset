@@ -14,32 +14,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp-Editor::PoolroomLightingState
   dataVersion: 3
   roomBrightness: 1
-  poolBrightness: 2.5
+  poolBrightness: 1
   roomLightBaselines:
   - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-1389862513-0
-    intensity: 522.824
+    intensity: 763.323
   - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-1271844779-0
-    intensity: 522.824
+    intensity: 763.323
   - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-1699272012-0
-    intensity: 209.1296
+    intensity: 305.32922
   poolLightBaselines:
   - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-1281727462-0
-    intensity: 477.4648
+    intensity: 0
   - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-468807699-0
-    intensity: 477.4648
+    intensity: 0
   - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-656284585-0
-    intensity: 477.4648
+    intensity: 0
   - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-1216099051-0
-    intensity: 477.4648
+    intensity: 0
   - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-2044906991-0
-    intensity: 477.4648
+    intensity: 0
   - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-693301953-0
-    intensity: 477.4648
+    intensity: 0
   - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-2050316981-0
-    intensity: 477.4648
+    intensity: 0
   - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-1479959584-0
-    intensity: 477.4648
+    intensity: 0
   - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-21261488-0
-    intensity: 477.4648
+    intensity: 0
   - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-570754876-0
-    intensity: 477.4648
+    intensity: 0
