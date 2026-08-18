@@ -1,9 +1,16 @@
-To Do:
+General To Do:
 
-Make plants/ room deco
-make title screen
-add music
 
-make collums bigger
-add splash + splash noise
-add 3d models
+- Make title screen
+- Add music
+- General sound effects like a water splash noise
+- Add the 3d models in, like the vases and creatures
+
+Prompts:
+
+Have the ladder's top only go till the edge of the pool wall so that you arent climbing when you're already out of the pool. Also, the A and D key controls seem to be flipped on the ladder, so switch them back.
+Make it so that you can sink into water by pressing shift, and out of the water, crouch.
+Work on the shadows. They look really chunky and unsmooth.
+Make sure the under-pool lighting is still red-lit. Maybe add some under-water pool lights with bloom or beam effects. 
+Add underwater slight blur and dust particle effects.
+Add ajustable chromatic abberation and noise scales for visual effects on the player camera (and tell me where you put them when you're done)
