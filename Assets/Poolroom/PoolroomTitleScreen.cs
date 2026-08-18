@@ -10,6 +10,7 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
     [SerializeField] private Player player;
     [SerializeField] private CanvasGroup titleCanvas;
     [SerializeField] private Button playButton;
+    [SerializeField] private Toggle drunkModeToggle;
     [SerializeField] private Volume blurVolume;
 
     [Header("Transition")]
@@ -43,11 +44,17 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
         }
     }
 
-    public void Configure(Player targetPlayer, CanvasGroup canvas, Button button, Volume titleBlur)
+    public void Configure(
+        Player targetPlayer,
+        CanvasGroup canvas,
+        Button button,
+        Toggle drunkToggle,
+        Volume titleBlur)
     {
         player = targetPlayer;
         titleCanvas = canvas;
         playButton = button;
+        drunkModeToggle = drunkToggle;
         blurVolume = titleBlur;
     }
 
@@ -94,6 +101,7 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
     {
         float elapsed = 0f;
         float duration = Mathf.Max(fadeDuration, 0.01f);
+        bool keepBlur = drunkModeToggle != null && drunkModeToggle.isOn;
 
         if (titleCanvas != null)
         {
@@ -111,7 +119,7 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
                 titleCanvas.alpha = 1f - amount;
             }
 
-            if (blurVolume != null)
+            if (blurVolume != null && !keepBlur)
             {
                 blurVolume.weight = 1f - amount;
             }
@@ -121,12 +129,15 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
 
         if (blurVolume != null)
         {
-            blurVolume.weight = 0f;
-            blurVolume.gameObject.SetActive(false);
+            blurVolume.weight = keepBlur ? 1f : 0f;
+            blurVolume.gameObject.SetActive(keepBlur);
         }
 
         player?.SetGameplayInputEnabled(true);
-        gameObject.SetActive(false);
+        if (!keepBlur)
+        {
+            gameObject.SetActive(false);
+        }
     }
 
     private void ResolveMissingReferences()
@@ -144,6 +155,11 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
         if (playButton == null)
         {
             playButton = GetComponentInChildren<Button>(true);
+        }
+
+        if (drunkModeToggle == null)
+        {
+            drunkModeToggle = GetComponentInChildren<Toggle>(true);
         }
 
         if (blurVolume == null)
