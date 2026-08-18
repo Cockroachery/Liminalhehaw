@@ -93,8 +93,8 @@ internal sealed class PoolroomLightingControls : EditorWindow
     private static readonly string[] PageNames =
     {
         "Room",
-        "Camera",
         "Cracks",
+        "Camera",
         "Presets"
     };
 
@@ -267,10 +267,10 @@ internal sealed class PoolroomLightingControls : EditorWindow
                 DrawRoomSection(sceneIsOpen);
                 break;
             case 1:
-                DrawCameraSection(sceneIsOpen);
+                DrawCracksSection();
                 break;
             case 2:
-                DrawCracksSection();
+                DrawCameraSection(sceneIsOpen);
                 break;
             case 3:
                 DrawPresetSection();
