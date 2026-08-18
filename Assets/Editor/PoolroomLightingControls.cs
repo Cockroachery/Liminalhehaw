@@ -99,6 +99,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
     private const int SeparatePoolLightingStateVersion = 1;
     private const int PoolSurfaceGlowStateVersion = 2;
     private const int PoolInteriorLightSheetStateVersion = 3;
+    private const float MaximumPoolBrightness = 10f;
 
     private static readonly string[] PageNames =
     {
@@ -395,7 +396,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
                 float oldPoolBrightness = PoolroomLightingState.instance.poolBrightness;
                 float newPoolBrightness = EditorGUILayout.Slider(
                     new GUIContent("Pool Brightness", "Controls only the transparent light sheets lining the inside of the underwater pool."),
-                    oldPoolBrightness, 0f, 2.5f);
+                    oldPoolBrightness, 0f, MaximumPoolBrightness);
                 if (!Mathf.Approximately(oldPoolBrightness, newPoolBrightness))
                     ApplyPoolBrightness(newPoolBrightness);
 
@@ -1226,8 +1227,8 @@ internal sealed class PoolroomLightingControls : EditorWindow
         }
 
         return brightnessValues.Count > 0
-            ? Mathf.Clamp(brightnessValues.Average(), 0f, 2.5f)
-            : Mathf.Clamp(state.poolBrightness, 0f, 2.5f);
+            ? Mathf.Clamp(brightnessValues.Average(), 0f, MaximumPoolBrightness)
+            : Mathf.Clamp(state.poolBrightness, 0f, MaximumPoolBrightness);
     }
 
     private static void ApplyRoomBrightness(float brightness)
@@ -1256,7 +1257,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
     private static void ApplyPoolBrightness(float brightness)
     {
         PoolroomLightingState state = PoolroomLightingState.instance;
-        state.poolBrightness = Mathf.Clamp(brightness, 0f, 2.5f);
+        state.poolBrightness = Mathf.Clamp(brightness, 0f, MaximumPoolBrightness);
         ApplyPoolSurfaceGlow(state.poolBrightness, true);
         SceneView.RepaintAll();
     }
@@ -1267,7 +1268,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
         if (material == null)
             return;
 
-        float clampedBrightness = Mathf.Clamp(brightness, 0f, 2.5f);
+        float clampedBrightness = Mathf.Clamp(brightness, 0f, MaximumPoolBrightness);
         if (Mathf.Approximately(material.GetFloat("_Brightness"), clampedBrightness))
             return;
 

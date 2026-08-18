@@ -3,7 +3,7 @@ Shader "Liminal/Pool Interior Light Sheet"
     Properties
     {
         [HDR] _GlowColor ("Underwater Glow Color", Color) = (1, 0.08, 0.18, 1)
-        _Brightness ("Pool Brightness", Range(0, 2.5)) = 1
+        _Brightness ("Pool Brightness", Range(0, 10)) = 1
         _Opacity ("Sheet Softness", Range(0, 0.5)) = 0.16
     }
 
