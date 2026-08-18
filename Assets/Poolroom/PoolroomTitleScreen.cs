@@ -95,6 +95,12 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
         gameplayMusic = music;
     }
 
+    public void ConfigureMenuSongs(AudioClip firstSong, AudioClip secondSong)
+    {
+        pipeCity = firstSong;
+        threeByThree = secondSong;
+    }
+
     private void ShowTitleScreen()
     {
         if (!Application.isPlaying || playStarted)
@@ -182,15 +188,21 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
         }
 
         AudioClip[] songs = { pipeCity, threeByThree };
-        int songIndex = 0;
+        AudioClip lastPlayed = null;
 
         while (!playStarted)
         {
-            AudioClip song = songs[songIndex];
-            songIndex = (songIndex + 1) % songs.Length;
+            ShuffleSongs(songs, lastPlayed);
 
-            if (song != null)
+            for (int songIndex = 0; songIndex < songs.Length && !playStarted; songIndex++)
             {
+                AudioClip song = songs[songIndex];
+                if (song == null)
+                {
+                    continue;
+                }
+
+                lastPlayed = song;
                 menuMusicSource.clip = song;
                 menuMusicSource.volume = menuMusicVolume;
                 menuMusicSource.Play();
@@ -199,22 +211,37 @@ public sealed class PoolroomTitleScreen : MonoBehaviour
                 {
                     yield return null;
                 }
-            }
 
-            if (playStarted)
-            {
-                yield break;
-            }
+                if (playStarted)
+                {
+                    yield break;
+                }
 
-            float gap = Random.Range(
-                Mathf.Min(minimumSongGap, maximumSongGap),
-                Mathf.Max(minimumSongGap, maximumSongGap));
-            float waited = 0f;
-            while (waited < gap && !playStarted)
-            {
-                waited += Time.unscaledDeltaTime;
-                yield return null;
+                float gap = Random.Range(
+                    Mathf.Min(minimumSongGap, maximumSongGap),
+                    Mathf.Max(minimumSongGap, maximumSongGap));
+                float waited = 0f;
+                while (waited < gap && !playStarted)
+                {
+                    waited += Time.unscaledDeltaTime;
+                    yield return null;
+                }
             }
+        }
+    }
+
+    private static void ShuffleSongs(AudioClip[] songs, AudioClip lastPlayed)
+    {
+        for (int index = songs.Length - 1; index > 0; index--)
+        {
+            int swapIndex = Random.Range(0, index + 1);
+            (songs[index], songs[swapIndex]) = (songs[swapIndex], songs[index]);
+        }
+
+        if (songs.Length > 1 && songs[0] == lastPlayed)
+        {
+            int swapIndex = Random.Range(1, songs.Length);
+            (songs[0], songs[swapIndex]) = (songs[swapIndex], songs[0]);
         }
     }
 

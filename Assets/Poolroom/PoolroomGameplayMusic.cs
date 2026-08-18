@@ -43,15 +43,22 @@ public sealed class PoolroomGameplayMusic : MonoBehaviour
 
     private IEnumerator PlayPlaylist()
     {
-        int songIndex = 0;
+        AudioClip[] playOrder = (AudioClip[])songs.Clone();
+        AudioClip lastPlayed = null;
 
         while (hasStarted)
         {
-            AudioClip song = songs[songIndex];
-            songIndex = (songIndex + 1) % songs.Length;
+            ShuffleSongs(playOrder, lastPlayed);
 
-            if (song != null)
+            for (int songIndex = 0; songIndex < playOrder.Length && hasStarted; songIndex++)
             {
+                AudioClip song = playOrder[songIndex];
+                if (song == null)
+                {
+                    continue;
+                }
+
+                lastPlayed = song;
                 musicSource.clip = song;
                 musicSource.volume = musicVolume;
                 musicSource.Play();
@@ -60,17 +67,32 @@ public sealed class PoolroomGameplayMusic : MonoBehaviour
                 {
                     yield return null;
                 }
-            }
 
-            float gap = Random.Range(
-                Mathf.Min(minimumSongGap, maximumSongGap),
-                Mathf.Max(minimumSongGap, maximumSongGap));
-            float waited = 0f;
-            while (waited < gap && hasStarted)
-            {
-                waited += Time.unscaledDeltaTime;
-                yield return null;
+                float gap = Random.Range(
+                    Mathf.Min(minimumSongGap, maximumSongGap),
+                    Mathf.Max(minimumSongGap, maximumSongGap));
+                float waited = 0f;
+                while (waited < gap && hasStarted)
+                {
+                    waited += Time.unscaledDeltaTime;
+                    yield return null;
+                }
             }
+        }
+    }
+
+    private static void ShuffleSongs(AudioClip[] playOrder, AudioClip lastPlayed)
+    {
+        for (int index = playOrder.Length - 1; index > 0; index--)
+        {
+            int swapIndex = Random.Range(0, index + 1);
+            (playOrder[index], playOrder[swapIndex]) = (playOrder[swapIndex], playOrder[index]);
+        }
+
+        if (playOrder.Length > 1 && playOrder[0] == lastPlayed)
+        {
+            int swapIndex = Random.Range(1, playOrder.Length);
+            (playOrder[0], playOrder[swapIndex]) = (playOrder[swapIndex], playOrder[0]);
         }
     }
 }
