@@ -13,15 +13,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-Editor::PoolroomLightingState
   dataVersion: 3
-  roomBrightness: 1.46
+  roomBrightness: 1
   poolBrightness: 2.5
   roomLightBaselines:
   - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-1389862513-0
-    intensity: 358.0986
+    intensity: 522.824
   - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-1271844779-0
-    intensity: 358.0986
+    intensity: 522.824
   - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-1699272012-0
-    intensity: 143.23944
+    intensity: 209.1296
   poolLightBaselines:
   - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-1281727462-0
     intensity: 477.4648

@@ -92,6 +92,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
     private const string WallBeamPrefabPath = "Assets/Poolroom/Cracks/Lighting/Wall Crack Light Beam.prefab";
     private const string FloorBeamPrefabPath = "Assets/Poolroom/Cracks/Lighting/Floor Crack Light Beam.prefab";
     private const string PoolSurfaceMaterialPath = "Assets/Poolroom/Materials/Pool Interior Light Sheet.mat";
+    private const string PoolCornerMaterialPath = "Assets/Poolroom/Materials/Pool Interior Corner Fill.mat";
     private const string PoolInteriorLightSheetRootName = "Pool Interior Light Sheets";
     private const string SelectedPageKey = "LiminalPoolroom.LightingControls.SelectedPage";
     private const int SignedFisheyePresetVersion = 1;
@@ -1263,18 +1264,26 @@ internal sealed class PoolroomLightingControls : EditorWindow
 
     private static void ApplyPoolSurfaceGlow(float brightness, bool recordUndo)
     {
-        Material material = AssetDatabase.LoadAssetAtPath<Material>(PoolSurfaceMaterialPath);
-        if (material == null)
+        Material[] materials =
+        {
+            AssetDatabase.LoadAssetAtPath<Material>(PoolSurfaceMaterialPath),
+            AssetDatabase.LoadAssetAtPath<Material>(PoolCornerMaterialPath)
+        };
+        Material[] changedMaterials = materials
+            .Where(material => material != null &&
+                               !Mathf.Approximately(material.GetFloat("_Brightness"), Mathf.Clamp(brightness, 0f, 2.5f)))
+            .ToArray();
+        if (changedMaterials.Length == 0)
             return;
 
         float clampedBrightness = Mathf.Clamp(brightness, 0f, 2.5f);
-        if (Mathf.Approximately(material.GetFloat("_Brightness"), clampedBrightness))
-            return;
-
         if (recordUndo)
-            Undo.RecordObject(material, "Adjust Underwater Pool Light Sheets");
-        material.SetFloat("_Brightness", clampedBrightness);
-        EditorUtility.SetDirty(material);
+            Undo.RecordObjects(changedMaterials, "Adjust Underwater Pool Light Sheets");
+        foreach (Material material in changedMaterials)
+        {
+            material.SetFloat("_Brightness", clampedBrightness);
+            EditorUtility.SetDirty(material);
+        }
     }
 
     private static void CaptureCurrentRoomLightsAsBaseline()
