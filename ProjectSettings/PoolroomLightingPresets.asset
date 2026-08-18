@@ -16,14 +16,14 @@ MonoBehaviour:
   hasLastSavedValues: 1
   lastSavedValues:
     presetName: Last Saved Values
-    roomBrightness: 0.9
+    roomBrightness: 1.46
     overallBloom: 0.5
     chromaticAberration: 1
     visualNoise: 1
     noiseResponse: 1
     noiseScale: 1
-    fisheyeStrength: -0.2
-    cameraFieldOfView: 60
+    fisheyeStrength: -0.385
+    cameraFieldOfView: 95
     cameraColorFilter: {r: 0.76026666, g: 0.7660377, b: 0.46684936, a: 1}
     cameraSaturation: 54.8
     cameraContrast: 100
@@ -56,8 +56,8 @@ MonoBehaviour:
     visualNoise: 1
     noiseResponse: 1
     noiseScale: 1
-    fisheyeStrength: -0.2
-    cameraFieldOfView: 60
+    fisheyeStrength: -0.385
+    cameraFieldOfView: 95
     cameraColorFilter: {r: 0.76026666, g: 0.7660377, b: 0.46684936, a: 1}
     cameraSaturation: 54.8
     cameraContrast: 100

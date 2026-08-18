@@ -94,8 +94,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
     {
         "Room",
         "Camera",
-        "Wall Cracks",
-        "Floor Cracks",
+        "Cracks",
         "Presets"
     };
 
@@ -271,12 +270,9 @@ internal sealed class PoolroomLightingControls : EditorWindow
                 DrawCameraSection(sceneIsOpen);
                 break;
             case 2:
-                DrawCrackSection(wallValues, new Color(1f, 0.72f, 0.72f));
+                DrawCracksSection();
                 break;
             case 3:
-                DrawCrackSection(floorValues, new Color(1f, 0.86f, 0.72f));
-                break;
-            case 4:
                 DrawPresetSection();
                 break;
         }
@@ -293,6 +289,17 @@ internal sealed class PoolroomLightingControls : EditorWindow
 
         EditorGUILayout.Space(8f);
         EditorGUILayout.EndScrollView();
+    }
+
+    private void DrawCracksSection()
+    {
+        EditorGUILayout.HelpBox(
+            "Wall and floor cracks remain separate below, so changing one group will not change the other.",
+            MessageType.Info);
+
+        DrawCrackSection(wallValues, new Color(1f, 0.72f, 0.72f));
+        EditorGUILayout.Space(8f);
+        DrawCrackSection(floorValues, new Color(1f, 0.86f, 0.72f));
     }
 
     private void DrawRoomSection(bool sceneIsOpen)
