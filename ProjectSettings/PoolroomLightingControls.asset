@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp-Editor::PoolroomLightingState
   dataVersion: 3
   roomBrightness: 1
-  poolBrightness: 0.02
+  poolBrightness: 1
   roomLightBaselines:
   - globalObjectId: GlobalObjectId_V1-2-8124e5870f4fd4c779e7a5f994e84ad1-1389862513-0
     intensity: 763.323

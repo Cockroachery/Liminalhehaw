@@ -66,6 +66,7 @@ MonoBehaviour:
   - {fileID: 806182240112440004}
   - {fileID: 806182240112440005}
   - {fileID: 806182240112440006}
+  - {fileID: 806182240112440007}
 --- !u!114 &806182240112440001
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -231,3 +232,19 @@ MonoBehaviour:
   opacity:
     m_OverrideState: 1
     m_Value: 1
+--- !u!114 &806182240112440007
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47e692e7b7ce4b34bfc9b28d35f9cf7a, type: 3}
+  m_Name: PoolroomPixelation
+  m_EditorClassIdentifier: Assembly-CSharp::PoolroomPixelation
+  active: 1
+  strength:
+    m_OverrideState: 1
+    m_Value: 0

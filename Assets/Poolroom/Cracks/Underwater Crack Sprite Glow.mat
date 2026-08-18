@@ -31,9 +31,9 @@ Material:
     m_Floats:
     - _AlphaBoost: 1.35
     - _Cutoff: 0.015
-    - _EmissionIntensity: 6
-    - _HaloIntensity: 0
-    - _HaloRadius: 1
+    - _EmissionIntensity: 2.55
+    - _HaloIntensity: 0.8
+    - _HaloRadius: 3.5
     m_Colors:
     - _HaloColor: {r: 1, g: 0.035, b: 0.01, a: 1}
     - _TintColor: {r: 1, g: 0.72, b: 0.48, a: 1}

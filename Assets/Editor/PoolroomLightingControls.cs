@@ -48,6 +48,9 @@ internal sealed class PoolroomLightingPreset
     public float cameraTemperature;
     public float cameraTint;
     public float cameraVignette;
+    public float cameraRockStrength;
+    public float cameraRockSpeed = 1.15f;
+    public float pixelation;
     public PoolroomCrackPresetValues wallCracks = new PoolroomCrackPresetValues();
     public PoolroomCrackPresetValues floorCracks = new PoolroomCrackPresetValues();
 }
@@ -99,6 +102,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
     private const int SeparatePoolLightingStateVersion = 1;
     private const int PoolSurfaceGlowStateVersion = 2;
     private const int PoolInteriorLightSheetStateVersion = 3;
+    private const int CameraMotionAndPixelationPresetVersion = 3;
     private const float MaximumPoolBrightness = 10f;
 
     private static readonly string[] PageNames =
@@ -142,6 +146,9 @@ internal sealed class PoolroomLightingControls : EditorWindow
     private float cameraTemperature;
     private float cameraTint;
     private float cameraVignette;
+    private float cameraRockStrength;
+    private float cameraRockSpeed = 1.15f;
+    private float pixelation;
     private bool showColorFilters = true;
     private int selectedFilterPreset;
     private int selectedNamedPreset;
@@ -223,7 +230,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
     private static void MigratePresetValues()
     {
         PoolroomLightingPresetState state = PoolroomLightingPresetState.instance;
-        if (state.dataVersion >= SeparatePoolLightingPresetVersion)
+        if (state.dataVersion >= CameraMotionAndPixelationPresetVersion)
             return;
 
         List<PoolroomLightingPreset> presets = new List<PoolroomLightingPreset>();
@@ -236,10 +243,13 @@ internal sealed class PoolroomLightingControls : EditorWindow
         {
             if (state.dataVersion < SignedFisheyePresetVersion)
                 preset.fisheyeStrength = Mathf.Clamp(-preset.fisheyeStrength, -1f, 1f);
-            preset.poolBrightness = preset.roomBrightness;
+            if (state.dataVersion < SeparatePoolLightingPresetVersion)
+                preset.poolBrightness = preset.roomBrightness;
+            if (state.dataVersion < CameraMotionAndPixelationPresetVersion)
+                preset.cameraRockSpeed = 1.15f;
         }
 
-        state.dataVersion = SeparatePoolLightingPresetVersion;
+        state.dataVersion = CameraMotionAndPixelationPresetVersion;
         state.SaveState();
     }
 
@@ -412,7 +422,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
         {
             EditorGUILayout.LabelField("Player Camera Effects", EditorStyles.boldLabel);
             EditorGUILayout.LabelField(
-                "Adjusts the player's lens, viewing width, moving noise, and final color mood.",
+                "Adjusts the player's lens, movement, pixel shape, moving noise, and final color mood.",
                 EditorStyles.wordWrappedMiniLabel);
 
             EditorGUI.BeginChangeCheck();
@@ -422,6 +432,9 @@ internal sealed class PoolroomLightingControls : EditorWindow
             float newVisualNoise = EditorGUILayout.Slider(
                 new GUIContent("Visual Noise", "Strength of the animated film-grain noise. Zero turns it off."),
                 visualNoise, 0f, 1f);
+            float newPixelation = EditorGUILayout.Slider(
+                new GUIContent("Pixelation", "Turns the finished camera image into larger square pixels. Zero turns it off."),
+                pixelation, 0f, 1f);
             int currentNoiseScale = Mathf.Max(0, Array.IndexOf(NoiseScales, noiseScale));
             int newNoiseScale = EditorGUILayout.Popup(
                 new GUIContent("Noise Scale", "Selects whether the visible noise specks are fine, medium, or large."),
@@ -434,11 +447,19 @@ internal sealed class PoolroomLightingControls : EditorWindow
                 new GUIContent("Fisheye Strength", "Negative values bend the view outward like a wide fisheye lens. Positive values pinch the view inward. Zero turns distortion off."),
                 fisheyeStrength, -1f, 1f);
             float newFieldOfView = cameraFieldOfView;
+            float newCameraRockStrength = cameraRockStrength;
+            float newCameraRockSpeed = cameraRockSpeed;
             using (new EditorGUI.DisabledScope(!sceneIsOpen))
             {
                 newFieldOfView = EditorGUILayout.Slider(
                     new GUIContent("Field of View", "Controls how wide the player's view is. Higher values show more of the room; lower values feel zoomed in."),
                     cameraFieldOfView, 40f, 120f);
+                newCameraRockStrength = EditorGUILayout.Slider(
+                    new GUIContent("Camera Rocking", "Adds an uneven, dreamlike sway to the player's view. Zero turns it off."),
+                    cameraRockStrength, 0f, 3f);
+                newCameraRockSpeed = EditorGUILayout.Slider(
+                    new GUIContent("Rocking Speed", "Controls how quickly the camera sways and trembles."),
+                    cameraRockSpeed, 0.1f, 5f);
             }
 
             Color newColorFilter = cameraColorFilter;
@@ -490,11 +511,17 @@ internal sealed class PoolroomLightingControls : EditorWindow
             {
                 chromaticAberration = newChromaticAberration;
                 visualNoise = newVisualNoise;
+                pixelation = newPixelation;
                 noiseScale = NoiseScales[Mathf.Clamp(newNoiseScale, 0, NoiseScales.Length - 1)];
                 noiseResponse = newNoiseResponse;
                 fisheyeStrength = newFisheyeStrength;
                 bool fieldOfViewChanged = !Mathf.Approximately(cameraFieldOfView, newFieldOfView);
+                bool cameraRockChanged =
+                    !Mathf.Approximately(cameraRockStrength, newCameraRockStrength) ||
+                    !Mathf.Approximately(cameraRockSpeed, newCameraRockSpeed);
                 cameraFieldOfView = newFieldOfView;
+                cameraRockStrength = newCameraRockStrength;
+                cameraRockSpeed = newCameraRockSpeed;
                 cameraColorFilter = newColorFilter;
                 cameraSaturation = newSaturation;
                 cameraContrast = newContrast;
@@ -506,6 +533,8 @@ internal sealed class PoolroomLightingControls : EditorWindow
                 ApplyPlayerCameraEffects();
                 if (fieldOfViewChanged)
                     ApplyPlayerCameraFieldOfView();
+                if (cameraRockChanged)
+                    ApplyPlayerCameraRocking();
             }
 
             if (showColorFilters)
@@ -531,14 +560,20 @@ internal sealed class PoolroomLightingControls : EditorWindow
             {
                 chromaticAberration = 0f;
                 visualNoise = 0f;
+                pixelation = 0f;
                 noiseScale = FilmGrainLookup.Thin1;
                 noiseResponse = 0f;
                 fisheyeStrength = 0f;
                 cameraFieldOfView = 60f;
+                cameraRockStrength = 0f;
+                cameraRockSpeed = 1.15f;
                 SetNeutralColorFilter();
                 ApplyPlayerCameraEffects();
                 if (sceneIsOpen)
+                {
                     ApplyPlayerCameraFieldOfView();
+                    ApplyPlayerCameraRocking();
+                }
             }
         }
     }
@@ -668,6 +703,9 @@ internal sealed class PoolroomLightingControls : EditorWindow
             cameraTemperature = cameraTemperature,
             cameraTint = cameraTint,
             cameraVignette = cameraVignette,
+            cameraRockStrength = cameraRockStrength,
+            cameraRockSpeed = cameraRockSpeed,
+            pixelation = pixelation,
             wallCracks = CaptureCrackValues(wallValues),
             floorCracks = CaptureCrackValues(floorValues)
         };
@@ -707,6 +745,9 @@ internal sealed class PoolroomLightingControls : EditorWindow
         cameraTemperature = values.cameraTemperature;
         cameraTint = values.cameraTint;
         cameraVignette = values.cameraVignette;
+        cameraRockStrength = values.cameraRockStrength;
+        cameraRockSpeed = values.cameraRockSpeed;
+        pixelation = values.pixelation;
         CopyCrackValues(values.wallCracks, wallValues);
         CopyCrackValues(values.floorCracks, floorValues);
 
@@ -716,6 +757,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
             ApplyRoomBrightness(values.roomBrightness);
             ApplyPoolBrightness(values.poolBrightness);
             ApplyPlayerCameraFieldOfView();
+            ApplyPlayerCameraRocking();
         }
 
         ApplyBloom();
@@ -930,6 +972,8 @@ internal sealed class PoolroomLightingControls : EditorWindow
 
     private void LoadPlayerCameraEffects()
     {
+        LoadPlayerCameraRocking();
+
         VolumeProfile profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(BloomProfilePath);
         if (profile != null &&
             profile.TryGet(out ChromaticAberration chromatic) &&
@@ -952,6 +996,9 @@ internal sealed class PoolroomLightingControls : EditorWindow
             cameraTemperature = whiteBalance.temperature.value;
             cameraTint = whiteBalance.tint.value;
             cameraVignette = vignette.intensity.value;
+            pixelation = profile.TryGet(out PoolroomPixelation pixelationEffect)
+                ? pixelationEffect.strength.value
+                : 0f;
             Camera playerCamera = FindPlayerCamera();
             if (playerCamera != null)
                 cameraFieldOfView = playerCamera.fieldOfView;
@@ -963,6 +1010,7 @@ internal sealed class PoolroomLightingControls : EditorWindow
         noiseScale = FilmGrainLookup.Medium3;
         noiseResponse = 0.8f;
         fisheyeStrength = 0f;
+        pixelation = 0f;
         SetNeutralColorFilter();
         Camera fallbackCamera = FindPlayerCamera();
         cameraFieldOfView = fallbackCamera != null ? fallbackCamera.fieldOfView : 60f;
@@ -977,14 +1025,24 @@ internal sealed class PoolroomLightingControls : EditorWindow
             !profile.TryGet(out LensDistortion lensDistortion) ||
             !profile.TryGet(out ColorAdjustments colorAdjustments) ||
             !profile.TryGet(out WhiteBalance whiteBalance) ||
-            !profile.TryGet(out Vignette vignette))
+            !profile.TryGet(out Vignette vignette) ||
+            !profile.TryGet(out PoolroomPixelation pixelationEffect))
         {
             Debug.LogError("Poolroom Lighting Controls could not find the player camera effects in the global poolroom profile.");
             return;
         }
 
         Undo.RecordObjects(
-            new UnityEngine.Object[] { chromatic, grain, lensDistortion, colorAdjustments, whiteBalance, vignette },
+            new UnityEngine.Object[]
+            {
+                chromatic,
+                grain,
+                lensDistortion,
+                colorAdjustments,
+                whiteBalance,
+                vignette,
+                pixelationEffect
+            },
             "Adjust Player Camera Effects");
         chromatic.intensity.value = chromaticAberration;
         grain.intensity.value = visualNoise;
@@ -999,12 +1057,14 @@ internal sealed class PoolroomLightingControls : EditorWindow
         whiteBalance.temperature.value = cameraTemperature;
         whiteBalance.tint.value = cameraTint;
         vignette.intensity.value = cameraVignette;
+        pixelationEffect.strength.value = pixelation;
         EditorUtility.SetDirty(chromatic);
         EditorUtility.SetDirty(grain);
         EditorUtility.SetDirty(lensDistortion);
         EditorUtility.SetDirty(colorAdjustments);
         EditorUtility.SetDirty(whiteBalance);
         EditorUtility.SetDirty(vignette);
+        EditorUtility.SetDirty(pixelationEffect);
         EditorUtility.SetDirty(profile);
         SceneView.RepaintAll();
     }
@@ -1086,6 +1146,49 @@ internal sealed class PoolroomLightingControls : EditorWindow
         SceneView.RepaintAll();
     }
 
+    private void LoadPlayerCameraRocking()
+    {
+        Player player = FindPlayer();
+        if (player == null)
+        {
+            cameraRockStrength = 0f;
+            cameraRockSpeed = 1.15f;
+            return;
+        }
+
+        SerializedObject serializedPlayer = new SerializedObject(player);
+        SerializedProperty strength = serializedPlayer.FindProperty("cameraRockStrength");
+        SerializedProperty speed = serializedPlayer.FindProperty("cameraRockSpeed");
+        cameraRockStrength = strength != null ? strength.floatValue : 0f;
+        cameraRockSpeed = speed != null && speed.floatValue > 0f ? speed.floatValue : 1.15f;
+    }
+
+    private void ApplyPlayerCameraRocking()
+    {
+        Player player = FindPlayer();
+        if (player == null)
+        {
+            return;
+        }
+
+        SerializedObject serializedPlayer = new SerializedObject(player);
+        SerializedProperty strength = serializedPlayer.FindProperty("cameraRockStrength");
+        SerializedProperty speed = serializedPlayer.FindProperty("cameraRockSpeed");
+        if (strength == null || speed == null)
+        {
+            Debug.LogError("Poolroom Lighting Controls could not find PLAYAH's camera rocking settings.");
+            return;
+        }
+
+        Undo.RecordObject(player, "Adjust Player Camera Rocking");
+        strength.floatValue = cameraRockStrength;
+        speed.floatValue = cameraRockSpeed;
+        serializedPlayer.ApplyModifiedProperties();
+        EditorUtility.SetDirty(player);
+        EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+        SceneView.RepaintAll();
+    }
+
     private static Camera FindPlayerCamera()
     {
         Scene scene = SceneManager.GetActiveScene();
@@ -1095,6 +1198,17 @@ internal sealed class PoolroomLightingControls : EditorWindow
         return scene.GetRootGameObjects()
             .SelectMany(root => root.GetComponentsInChildren<Camera>(true))
             .FirstOrDefault(camera => camera.gameObject.name == "Main Camera");
+    }
+
+    private static Player FindPlayer()
+    {
+        Scene scene = SceneManager.GetActiveScene();
+        if (!scene.IsValid() || scene.path != ScenePath)
+            return null;
+
+        return scene.GetRootGameObjects()
+            .SelectMany(root => root.GetComponentsInChildren<Player>(true))
+            .FirstOrDefault();
     }
 
     private static List<Light> FindRoomLights()

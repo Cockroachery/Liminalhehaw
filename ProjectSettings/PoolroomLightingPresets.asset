@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 0}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp-Editor::PoolroomLightingPresetState
-  dataVersion: 2
+  dataVersion: 3
   hasLastSavedValues: 1
   lastSavedValues:
     presetName: Last Saved Values
@@ -33,6 +33,9 @@ MonoBehaviour:
     cameraTemperature: -78.8
     cameraTint: 26.5
     cameraVignette: 0.481
+    cameraRockStrength: 0
+    cameraRockSpeed: 1.15
+    pixelation: 0
     wallCracks:
       glow: 6
       halo: 0
@@ -68,6 +71,9 @@ MonoBehaviour:
     cameraTemperature: -78.8
     cameraTint: 26.5
     cameraVignette: 0.481
+    cameraRockStrength: 0
+    cameraRockSpeed: 1.15
+    pixelation: 0
     wallCracks:
       glow: 6
       halo: 0
@@ -84,3 +90,40 @@ MonoBehaviour:
       castReach: 0.25
       beamBrightness: 0
       beamLength: 0.2
+  - presetName: Normal
+    roomBrightness: 1
+    poolBrightness: 1
+    overallBloom: 0.5
+    chromaticAberration: 0
+    visualNoise: 0
+    noiseResponse: 0
+    noiseScale: 0
+    fisheyeStrength: 0
+    cameraFieldOfView: 60
+    cameraColorFilter: {r: 1, g: 1, b: 1, a: 1}
+    cameraSaturation: 0
+    cameraContrast: 0
+    cameraHueShift: 0
+    cameraExposure: 0
+    cameraTemperature: 0
+    cameraTint: 0
+    cameraVignette: 0
+    cameraRockStrength: 0
+    cameraRockSpeed: 1.15
+    pixelation: 0
+    wallCracks:
+      glow: 1.55
+      halo: 0.28
+      haloWidth: 2.25
+      castBrightness: 45
+      castReach: 1.65
+      beamBrightness: 42
+      beamLength: 1.25
+    floorCracks:
+      glow: 2.55
+      halo: 0.8
+      haloWidth: 3.5
+      castBrightness: 55
+      castReach: 1.35
+      beamBrightness: 42
+      beamLength: 1.25

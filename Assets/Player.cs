@@ -37,6 +37,10 @@ public class Player : MonoBehaviour
     [SerializeField] private float minimumLookAngle = -80f;
     [SerializeField] private float maximumLookAngle = 80f;
 
+    [Header("Camera Motion")]
+    [SerializeField, Range(0f, 3f)] private float cameraRockStrength;
+    [SerializeField, Range(0.1f, 5f)] private float cameraRockSpeed = 1.15f;
+
     private Rigidbody body;
     private CapsuleCollider bodyCollider;
     private Vector2 moveInput;
@@ -166,7 +170,22 @@ public class Player : MonoBehaviour
         // LateUpdate is the final graphical update for this frame. Applying the
         // view here keeps camera motion in step with rendering instead of physics.
         transform.rotation = Quaternion.Euler(0f, displayedYaw, 0f);
-        viewTransform.localRotation = Quaternion.Euler(displayedPitch, 0f, 0f);
+
+        float rockTime = Time.unscaledTime * Mathf.Max(cameraRockSpeed, 0.1f);
+        float rockPitch = (
+            Mathf.Sin(rockTime * 1.31f + 0.8f) * 0.22f
+            + Mathf.Sin(rockTime * 0.47f + 2.1f) * 0.08f) * cameraRockStrength;
+        float rockYaw = (
+            Mathf.Sin(rockTime * 0.73f + 1.4f) * 0.16f
+            + Mathf.Sin(rockTime * 1.83f + 0.2f) * 0.05f) * cameraRockStrength;
+        float rockRoll = (
+            Mathf.Sin(rockTime) * 0.82f
+            + Mathf.Sin(rockTime * 0.39f + 2.7f) * 0.18f) * cameraRockStrength;
+
+        viewTransform.localRotation = Quaternion.Euler(
+            displayedPitch + rockPitch,
+            rockYaw,
+            rockRoll);
 
         if (bodyCollider != null && standingColliderHeight > crouchHeight)
         {

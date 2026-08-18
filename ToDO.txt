@@ -9,9 +9,9 @@ General To Do:
 
 Prompts:
 
-Work on the shadows. They look really chunky and unsmooth.
 
-add curved, weird, and diverse stairs in the pool to allow for easy exit and add to the liminal space theme.
+
+
 
 
 Finished/Sent:
@@ -21,3 +21,4 @@ Make sure the under-pool lighting is still red-lit. Maybe add some under-water p
 Make the inside pool lights more line-ish and strange. Add more, and have some of them be on the floor, too.
 Add underwater slight blur and dust particle effects.
 Add ajustable chromatic abberation and noise scales for visual effects on the player camera (and put it under the poolroom lighting tab)
+add curved, weird, and diverse stairs in the pool to allow for easy exit and add to the liminal space theme.
